@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MY BASE i (MBi) - 実用版</title>
+<style>
+  :root {
+    --bg-dark: #18191f;
+    --board-bg: #eef0f4;
+    --primary: #2b3040;
+    --accent: #5c6ac4;
+    --text-main: #2b2d42;
+    --text-sub: #6c757d;
+    --policy-bg: rgba(22, 24, 30, 0.96);
+
+    /* 付箋カラーパレット */
+    --note-yellow: #fff8c5;
+    --note-yellow-top: #fae88c;
+    --note-blue: #dff2ff;
+    --note-blue-top: #b8e2ff;
+    --note-pink: #ffe3eb;
+    --note-pink-top: #ffc2d4;
+    --note-green: #e2f8e9;
+    --note-green-top: #bceeches;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Meiryo", sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 15px;
+    color: var(--text-main);
+  }
+
+  /* 外部コントロールバー（PC表示用） */
+  .demo-controls {
+    width: 100%;
+    max-width: 420px;
+    background: #2b2d38;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .demo-controls button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 5px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+  }
+  .demo-controls button.sub-btn { background: #495057; margin-left: 4px; }
+
+  /* スマホ本体フレーム */
+  .phone-frame {
+    width: 100%;
+    max-width: 420px;
+    height: 800px;
+    background: var(--board-bg);
+    border-radius: 36px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 0 0 8px #111;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* スマホ実機で開いた時は枠を消して全画面化 */
+  @media (max-width: 480px) {
+    body { padding: 0; background: var(--board-bg); }
+    .demo-controls { border-radius: 0; margin-bottom: 0; max-width: 100%; }
+    .phone-frame {
+      max-width: 100%;
+      height: calc(100vh - 38px);
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+
+  /* 1. 上部マイポリシー（プルダウン・シェード） */
+  .policy-handle-bar {
+    background: var(--primary);
+    color: #fff;
+    text-align: center;
+    padding: 10px 15px 7px;
+    cursor: pointer;
+    z-index: 30;
+    user-select: none;
+    display: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .handle-pill {
+    width: 42px;
+    height: 4px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px;
+    margin: 0 auto 4px;
+  }
+  .policy-handle-text {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    color: #ffd43b;
+    font-weight: bold;
+  }
+
+  .policy-drawer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 90%;
+    background: var(--policy-bg);
+    color: #fff;
+    z-index: 40;
+    transform: translateY(-105%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    backdrop-filter: blur(12px);
+  }
+  .policy-drawer.open { transform: translateY(0); }
+
+  .policy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    padding-bottom: 10px;
+  }
+  .policy-header h2 { font-size: 15px; letter-spacing: 1px; color: #ffd43b; }
+  .close-policy-btn {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .policy-box {
+    background: rgba(255,255,255,0.06);
+    border-left: 3px solid #ffd43b;
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+  }
+  .policy-box.sub-policy { border-left-color: #74c0fc; }
+  .policy-box.daily-policy { border-left-color: #63e6be; }
+
+  .policy-label {
+    font-size: 10px;
+    color: #adb5bd;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .policy-content {
+    font-size: 13.5px;
+    line-height: 1.6;
+    outline: none;
+    white-space: pre-wrap;
+  }
+  .policy-content:focus {
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    padding: 4px;
+  }
+  .policy-translation-note {
+    font-size: 12px;
+    color: #ced4da;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255,255,255,0.15);
+    outline: none;
+    white-space: pre-wrap;
+  }
+
+  /* アプリヘッダー＆i棒ミニバナー */
+  .app-header {
+    background: #fff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e2e5ec;
+  }
+  .app-title { font-weight: 900; font-size: 15px; color: var(--primary); letter-spacing: 0.5px; }
+  .save-indicator { font-size: 10px; color: #2b8a3e; background: #ebfbee; padding: 3px 8px; border-radius: 10px; }
+
+  .ibo-banner {
+    background: #eef2ff;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #dbe4ff;
+    cursor: pointer;
+  }
+  .ibo-avatar-mini {
+    width: 34px;
+    height: 34px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    border: 2px solid var(--accent);
+    flex-shrink: 0;
+  }
+  .ibo-speech {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: #364fc7;
+    flex: 1;
+  }
+
+  /* メインコンテンツ領域 */
+  .main-view {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+  }
+  .tab-pane { display: none; flex-direction: column; height: 100%; }
+  .tab-pane.active { display: flex; }
+
+  /* トピック切り替えピル */
+  .topic-switcher {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    align-items: center;
+  }
+  .topic-btn {
+    background: #dee2e6;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 11.5px;
+    font-weight: bold;
+    color: #495057;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .topic-btn.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  }
+  .topic-btn.locked { display: none; }
+  .add-topic-btn {
+    background: none;
+    border: 1px dashed #868e96;
+    color: #495057;
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* トピック最上部の「外れない目的付箋」 */
+  .core-sticky {
+    background: #fff3bf;
+    border-top: 8px solid #fcc419;
+    padding: 10px 12px;
+    border-radius: 3px 3px 8px 8px;
+    margin-bottom: 12px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    position: relative;
+  }
+  .core-sticky-label {
+    font-size: 10px;
+    font-weight: bold;
+    color: #e67700;
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .core-sticky-text {
+    font-size: 12.5px;
+    font-weight: bold;
+    line-height: 1.45;
+    color: #2b2d42;
+    outline: none;
+    white-space: pre-wrap;
+  }
+
+  /* 付箋作成エリア（色選択つき） */
+  .composer-box {
+    background: #fff;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    margin-bottom: 14px;
+    border: 1px solid #e2e5ec;
+  }
+  .color-picker-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .color-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .color-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: transform 0.15s;
+  }
+  .color-dot.active {
+    border-color: #2b2d42;
+    transform: scale(1.15);
+  }
+  .dot-yellow { background: #ffe066; }
+  .dot-blue   { background: #74c0fc; }
+  .dot-pink   { background: #faa2c1; }
+  .dot-green  { background: #8ce99a; }
+
+  .color-label-hint {
+    font-size: 10.5px;
+    color: var(--text-sub);
+    font-weight: bold;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 6px;
+  }
+  .input-row input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+  }
+  .input-row input:focus { border-color: var(--accent); }
+  .input-row button {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* リアル付箋グリッド（2列） */
+  .sticky-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    overflow-y: auto;
+    padding: 4px 2px 16px;
+    flex: 1;
+    align-content: start;
+  }
+
+  .sticky-note {
+    min-height: 115px;
+    padding: 10px 11px 8px;
+    border-radius: 2px 2px 6px 14px;
+    box-shadow: 2px 4px 8px rgba(0,0,0,0.09);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .sticky-note:hover {
+    transform: scale(1.02) rotate(0deg) !important;
+    box-shadow: 3px 6px 14px rgba(0,0,0,0.14);
+    z-index: 5;
+  }
+
+  /* 付箋カラー別の質感（上部の糊付けライン） */
+  .sticky-note.yellow {
+    background: var(--note-yellow);
+    border-top: 10px solid var(--note-yellow-top);
+  }
+  .sticky-note.blue {
+    background: var(--note-blue);
+    border-top: 10px solid var(--note-blue-top);
+  }
+  .sticky-note.pink {
+    background: var(--note-pink);
+    border-top: 10px solid var(--note-pink-top);
+  }
+  .sticky-note.green {
+    background: var(--note-green);
+    border-top: 10px solid #a9e3b8;
+  }
+
+  /* ピン留めされた付箋は2列ぶち抜きも選べるように、または目立つバッジ */
+  .sticky-note.pinned {
+    box-shadow: 0 4px 12px rgba(217, 72, 15, 0.18);
+    outline: 1.5px solid rgba(217, 72, 15, 0.35);
+  }
+
+  .sticky-body {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #212529;
+    word-break: break-word;
+    outline: none;
+    flex: 1;
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+  }
+  .sticky-body:focus {
+    background: rgba(255,255,255,0.5);
+    border-radius: 4px;
+    padding: 2px;
+  }
+
+  .sticky-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: rgba(0,0,0,0.45);
+    border-top: 1px dashed rgba(0,0,0,0.08);
+    padding-top: 4px;
+  }
+  .sticky-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .sticky-act-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0.65;
+    padding: 0 2px;
+  }
+  .sticky-act-btn:hover { opacity: 1; }
+
+  /* 言語化チャット */
+  .mode-selector {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .mode-chip {
+    flex: 1;
+    text-align: center;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    padding: 7px 4px;
+    border-radius: 8px;
+    font-size: 11px;
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--primary);
+  }
+  .chat-box {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid #e2e5ec;
+    margin-bottom: 10px;
+  }
+  .msg {
+    max-width: 84%;
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .msg.bot {
+    background: #eef2ff;
+    color: #1e293b;
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+  }
+  .msg.user {
+    background: var(--accent);
+    color: #fff;
+    align-self: flex-end;
+    border-bottom-right-radius: 2px;
+  }
+
+  /* 言語化BOOK */
+  .book-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid #e2e5ec;
+    margin-bottom: 10px;
+  }
+  .book-scene {
+    display: inline-block;
+    background: #e7f5ff;
+    color: #1971c2;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+  }
+  .book-phrase {
+    font-size: 13.5px;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .book-source {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+  }
+  .book-usecase {
+    font-size: 11.5px;
+    color: #495057;
+    background: #f8f9fa;
+    padding: 7px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  .pin-btn {
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  /* 下部ナビゲーションバー */
+  .bottom-nav {
+    background: #fff;
+    border-top: 1px solid #e2e5ec;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 12px;
+  }
+  .nav-item {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    color: var(--text-sub);
+    cursor: pointer;
+    flex: 1;
+  }
+  .nav-item.active { color: var(--accent); font-weight: bold; }
+  .nav-item.locked { display: none; }
+  .nav-icon { font-size: 17px; }
+
+  .style-select-btn {
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+    background: #fff;
+    cursor: pointer;
+    font-size: 11.5px;
+    font-weight: bold;
+    flex: 1;
+  }
+  .style-select-btn.active {
+    border-color: var(--accent);
+    background: #eef2ff;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+  <!-- 上部コントロールパネル -->
+  <div class="demo-controls">
+    <div>
+      <strong>MBi:</strong> <span id="phase-label">Phase 0</span>
+    </div>
+    <div>
+      <button onclick="unlockAll()">⚡ 全機能を解放</button>
+      <button class="sub-btn" onclick="resetAllData()">初期化</button>
+    </div>
+  </div>
+
+  <!-- スマホフレーム -->
+  <div class="phone-frame">
+
+    <!-- 1. 上から引き下ろす「マイポリシー」ハンドル -->
+    <div id="policy-handle" class="policy-handle-bar" onclick="togglePolicyDrawer()">
+      <div class="handle-pill"></div>
+      <div class="policy-handle-text">▼ MY POLICY（自分のベースに戻る）</div>
+    </div>
+
+    <!-- マイポリシーの引き出し中身 -->
+    <div id="policy-drawer" class="policy-drawer">
+      <div class="policy-header">
+        <h2>🧭 MY POLICY</h2>
+        <button class="close-policy-btn" onclick="togglePolicyDrawer()">▲ 閉じる</button>
+      </div>
+
+      <p style="font-size: 11px; color: #adb5bd; margin-bottom: 12px;">
+        ※文字をタップして書き換えると、そのまま自動保存されます。
+      </p>
+
+      <div class="policy-box">
+        <div class="policy-label">
+          <span>【期限なし】プライマリポリシー / 座右の銘</span>
+          <span>✏️ 自動保存</span>
+        </div>
+        <div class="policy-content" id="pol-primary" contenteditable="true" oninput="savePolicies()"></div>
+        <div class="policy-translation-note" id="pol-trans" contenteditable="true" oninput="savePolicies()"></div>
+      </div>
+
+      <div class="policy-box sub-policy">
+        <div class="policy-label">
+          <span>【今月のスタンス】</span>
+          <span>✏️ 自動保存</span>
+        </div>
+        <div class="policy-content" id="pol-monthly" contenteditable="true" oninput="savePolicies()"></div>
+      </div>
+
+      <div class="policy-box daily-policy">
+        <div class="policy-label">
+          <span>【今日の自分のロール（役割）】</span>
+          <span>✏️ 自動保存</span>
+        </div>
+        <div class="policy-content" id="pol-daily" contenteditable="true" oninput="savePolicies()"></div>
+      </div>
+    </div>
+
+    <!-- アプリヘッダー -->
+    <div class="app-header">
+      <div class="app-title">MY BASE i</div>
+      <div class="save-indicator" id="save-badge">✓ 自動保存ON</div>
+    </div>
+
+    <!-- i棒ミニバナー -->
+    <div class="ibo-banner" onclick="switchTab('tab-chat')">
+      <div class="ibo-avatar-mini" id="ibo-mini-icon">🧍</div>
+      <div class="ibo-speech" id="ibo-banner-text">
+        好きな色の付箋を選んで、思いついたことや言葉をペタペタ貼ってみて！
+      </div>
+    </div>
+
+    <!-- メインビュー -->
+    <div class="main-view">
+
+      <!-- タブ1：マイボード（付箋＆トピック） -->
+      <div id="tab-board" class="tab-pane active">
+        
+        <!-- トピック切り替え -->
+        <div class="topic-switcher" id="topic-bar"></div>
+
+        <!-- トピック最上部の「外れない目的付箋」 -->
+        <div class="core-sticky">
+          <div class="core-sticky-label">
+            <span id="sticky-topic-title">📌 この部屋のスタンス（外れない付箋）</span>
+            <span>✏️ タップで編集</span>
+          </div>
+          <div class="core-sticky-text" id="sticky-topic-purpose" contenteditable="true" oninput="saveTopicPurpose()"></div>
+        </div>
+
+        <!-- 付箋入力＆カラーピッカー -->
+        <div class="composer-box">
+          <div class="color-picker-row">
+            <div class="color-dots">
+              <div class="color-dot dot-yellow active" onclick="selectColor('yellow', '🟨 雑記・思いつき', this)" title="思いつき"></div>
+              <div class="color-dot dot-blue" onclick="selectColor('blue', '🟦 クエスト・やること', this)" title="クエスト"></div>
+              <div class="color-dot dot-pink" onclick="selectColor('pink', '🟥 感情・大事な言葉', this)" title="大切な言葉"></div>
+              <div class="color-dot dot-green" onclick="selectColor('green', '🟩 考察・アイデア', this)" title="アイデア"></div>
+            </div>
+            <span class="color-label-hint" id="color-hint">🟨 雑記・思いつき</span>
+          </div>
+          <div class="input-row">
+            <input type="text" id="memo-input" placeholder="付箋に書く内容を入力..." onkeypress="if(event.key==='Enter') addMemo()">
+            <button onclick="addMemo()">貼る</button>
+          </div>
+        </div>
+
+        <!-- 2列グリッドの付箋ボード -->
+        <div class="sticky-grid" id="memo-list"></div>
+      </div>
+
+      <!-- タブ2：言語化チャット -->
+      <div id="tab-chat" class="tab-pane">
+        <div class="mode-selector">
+          <div class="mode-chip" onclick="triggerChatMode('question')">🎲 1日1問</div>
+          <div class="mode-chip" onclick="triggerChatMode('detox')">🗣️ 愚痴から本音抽出</div>
+          <div class="mode-chip" onclick="triggerChatMode('role')">🎭 今日のロール決め</div>
+        </div>
+
+        <div class="chat-box" id="chat-box">
+          <div class="msg bot">
+            相棒の「i棒（アイボー）」だよ！<br>
+            ここで話したことも、ワンタップでボードの付箋やマイポリシーに貼れるようにしてあるよ。何でも気軽に投げてみて！
+          </div>
+        </div>
+
+        <div class="input-row">
+          <input type="text" id="chat-input" placeholder="i棒に話しかける..." onkeypress="if(event.key==='Enter') sendChat()">
+          <button onclick="sendChat()">送信</button>
+        </div>
+      </div>
+
+      <!-- タブ3：言語化BOOK -->
+      <div id="tab-book" class="tab-pane">
+        <!-- 自分の言葉を継ぎ足すフォーム -->
+        <div class="composer-box" style="margin-bottom: 10px;">
+          <div style="font-size: 11px; font-weight: bold; margin-bottom: 6px; color: var(--primary);">
+            ➕ 言語化BOOKに言葉・名言をコレクションする
+          </div>
+          <input type="text" id="book-phrase-in" placeholder="言葉・フレーズ（例：人生はロールプレイング）" style="width:100%; padding:6px 8px; margin-bottom:5px; border:1px solid #dee2e6; border-radius:6px; font-size:12px;">
+          <div style="display:flex; gap:5px; margin-bottom:5px;">
+            <input type="text" id="book-source-in" placeholder="出典（作品名・人物など）" style="flex:1; padding:6px 8px; border:1px solid #dee2e6; border-radius:6px; font-size:11px;">
+            <input type="text" id="book-scene-in" placeholder="使う場面（例：迷った時）" style="flex:1; padding:6px 8px; border:1px solid #dee2e6; border-radius:6px; font-size:11px;">
+          </div>
+          <div style="display:flex; gap:5px;">
+            <input type="text" id="book-use-in" placeholder="自分なりの解釈・実践用例" style="flex:1; padding:6px 8px; border:1px solid #dee2e6; border-radius:6px; font-size:11px;">
+            <button onclick="addBookEntry()" style="background:var(--accent); color:#fff; border:none; padding:0 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">追加</button>
+          </div>
+        </div>
+
+        <div id="book-list" style="overflow-y:auto; flex:1;"></div>
+      </div>
+
+      <!-- タブ4：プロファイル＆設定 -->
+      <div id="tab-profile" class="tab-pane">
+        <div class="book-card">
+          <div class="book-phrase">🤖 相棒（i棒）のスタイル切り替え</div>
+          <p style="font-size: 11.5px; color: var(--text-sub); margin-bottom: 8px;">選択したスタイルも自動保存されます。</p>
+          <div style="display: flex; gap: 6px;">
+            <button class="style-select-btn" id="style-btn-0" onclick="changeIboStyle('🧍', 'シンプル棒人間', 0)">🧍 棒人間</button>
+            <button class="style-select-btn" id="style-btn-1" onclick="changeIboStyle('🦊', 'V系・親しみ相棒', 1)">🦊 V系</button>
+            <button class="style-select-btn" id="style-btn-2" onclick="changeIboStyle('🧙‍♂️', 'アニメ系・賢者', 2)">🧙‍♂️ アニメ系</button>
+          </div>
+        </div>
+
+        <div class="book-card">
+          <div class="book-phrase">📊 あなたのベースプロファイル（編集可）</div>
+          <p style="font-size: 11px; color: var(--text-sub); margin-bottom: 6px;">自分の取扱説明書として自由に書き留めておけます。</p>
+          <div id="profile-memo" contenteditable="true" oninput="saveProfileMemo()" style="font-size:12.5px; line-height:1.7; background:#f8f9fa; padding:10px; border-radius:8px; outline:none; white-space:pre-wrap;"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 下部ナビゲーション -->
+    <div class="bottom-nav">
+      <button class="nav-item active" onclick="switchTab('tab-board', this)">
+        <span class="nav-icon">📌</span>
+        <span>マイボード</span>
+      </button>
+      <button class="nav-item" onclick="switchTab('tab-chat', this)">
+        <span class="nav-icon">💬</span>
+        <span>言語化(i棒)</span>
+      </button>
+      <button class="nav-item locked" id="nav-book" onclick="switchTab('tab-book', this)">
+        <span class="nav-icon">📚</span>
+        <span>言語化BOOK</span>
+      </button>
+      <button class="nav-item locked" id="nav-profile" onclick="switchTab('tab-profile', this)">
+        <span class="nav-icon">👤</span>
+        <span>プロファイル</span>
+      </button>
+    </div>
+
+  </div>
+
+<script>
+  const STORAGE_KEY = 'mbi_app_data_v1';
+  let selectedColor = 'yellow';
+  let currentTopicId = 'quick';
+
+  // 初期データ構造
+  const defaultState = {
+    unlockPhase: 0,
+    iboStyleIndex: 0,
+    iboIcon: '🧍',
+    policies: {
+      primary: '祇園精舎の鐘の声、諸行無常の響きあり。沙羅双樹の花の色、盛者必衰の理をあらはす。',
+      trans: '💡 自分の言葉への翻訳：\n「どんな権力や世間の基準も永遠じゃない。だから組織の空気や他人の目に自分をすり減らさず、今自分が心地よいと思える時間を一番大事にする」',
+      monthly: '無理に高い目標を作らない。流れるように楽しみながら、面白かった作品の感想や思いつきを付箋に残す月にしよう。',
+      daily: '🎭 今日のロール：『物語と世界の観測者』\n（何かを生産しなくても、作品を見たり考え事をするだけで100点の日）'
+    },
+    profileMemo: '・大切にしている芯：集団の空気で「個」が潰されるのを嫌い、個人の尊厳や本音を重視する。\n・心地よいペース：強制される目標よりも、流れるように楽しみながら思考を深めるボトムアップ型。\n・得意なこと：物語や日常の違和感から「なぜそうなるのか？」の構造や企画を組み立てること。',
+    topics: [
+      {
+        id: 'quick',
+        name: '📌 玄関 (クイック付箋)',
+        purpose: '分類しなくてOK！ふと思いついたこと、忘れたくない言葉、今日やることをとりあえずペタペタ貼っておく場所。',
+        memos: [
+          { text: '付箋の文字はタップするとそのまま書き換えられます✏️', color: 'yellow', date: '使い方', pinned: true, angle: -1.2 },
+          { text: 'モノノ怪を見て、人が本音を言えずに組織に飲まれる構造について考えた', color: 'green', date: '考察', pinned: false, angle: 1.1 },
+          { text: '自分のベースにいつでも戻れるアプリ「MBi」の構想を広げる', color: 'blue', date: 'クエスト', pinned: false, angle: -0.8 },
+          { text: '「趣味に目標なんてなくていい、楽しめばええやん」も立派なポリシー', color: 'pink', date: '大事な言葉', pinned: false, angle: 1.4 }
+        ]
+      },
+      {
+        id: 'hobby',
+        name: '🎬 趣味・インプット',
+        purpose: '目標や生産性は持ち込まない！「ただ流れるように今を楽しむ」こと自体を最優先の目的にする聖域。',
+        memos: [
+          { text: '気になっていたアニメの続きを気楽に見る', color: 'yellow', date: '趣味', pinned: true, angle: 0.8 },
+          { text: 'グッときたセリフがあったら言語化BOOKにコレクションする', color: 'pink', date: '楽しみ方', pinned: false, angle: -1.1 }
+        ]
+      },
+      {
+        id: 'idea',
+        name: '💡 妄想・アイデア構想',
+        purpose: '完成させることより「思考を転がすワクワク感」を味わう実験場。',
+        memos: [
+          { text: '「頑張る」を自分のためのロール（役割）に翻訳する仕組み', color: 'green', date: '構想', pinned: true, angle: -0.6 }
+        ]
+      }
+    ],
+    books: [
+      {
+        scene: '組織や空気に流されそうな時',
+        phrase: '「集団の誤謬（ごびゅう）に己を明け渡すな」',
+        source: '物語からのインスピレーション',
+        usecase: 'みんながそうしているからと、自分の違和感や尊厳を押し殺しそうになった時に立ち返る言葉。'
+      },
+      {
+        scene: 'やる気が出ない自分を肯定したい時',
+        phrase: '「人生はロールプレイング。役目は自分で決めていい」',
+        source: '堀井雄二氏の言葉より着想',
+        usecase: '社会から与えられた役割に疲れた時、「今日は世界を眺める観測者のロールで行こう」と自分を許す言葉。'
+      }
+    ]
+  };
+
+  let appState = loadState();
+
+  function loadState() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) { console.error(e); }
+    return JSON.parse(JSON.stringify(defaultState));
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      const badge = document.getElementById('save-badge');
+      badge.textContent = '✓ 保存しました';
+      setTimeout(() => { badge.textContent = '✓ 自動保存ON'; }, 1200);
+    } catch (e) { console.error(e); }
+  }
+
+  // 初期表示のセットアップ
+  function initApp() {
+    // ポリシー反映
+    document.getElementById('pol-primary').textContent = appState.policies.primary;
+    document.getElementById('pol-trans').textContent = appState.policies.trans;
+    document.getElementById('pol-monthly').textContent = appState.policies.monthly;
+    document.getElementById('pol-daily').textContent = appState.policies.daily;
+    document.getElementById('profile-memo').textContent = appState.profileMemo;
+
+    // i棒スタイル反映
+    document.getElementById('ibo-mini-icon').textContent = appState.iboIcon;
+    document.querySelectorAll('.style-select-btn').forEach((b, idx) => {
+      b.classList.toggle('active', idx === appState.iboStyleIndex);
+    });
+
+    applyUnlockUI();
+    renderTopicBar();
+    renderMemos();
+    renderBooks();
+  }
+
+  // アンロック状態のUI反映
+  function applyUnlockUI() {
+    const phase = appState.unlockPhase;
+    if (phase === 0) {
+      document.getElementById('phase-label').textContent = 'Phase 0 (初期状態)';
+      document.getElementById('policy-handle').style.display = 'none';
+      document.getElementById('nav-book').classList.add('locked');
+      document.getElementById('nav-profile').classList.add('locked');
+    } else if (phase === 1) {
+      document.getElementById('phase-label').textContent = 'Phase 1 (部屋解放済)';
+      document.getElementById('policy-handle').style.display = 'none';
+      document.getElementById('nav-book').classList.add('locked');
+      document.getElementById('nav-profile').classList.add('locked');
+    } else {
+      document.getElementById('phase-label').textContent = 'Phase 2 (全機能解放済)';
+      document.getElementById('policy-handle').style.display = 'block';
+      document.getElementById('nav-book').classList.remove('locked');
+      document.getElementById('nav-profile').classList.remove('locked');
+    }
+  }
+
+  // トピックバー描画
+  function renderTopicBar() {
+    const bar = document.getElementById('topic-bar');
+    bar.innerHTML = '';
+    appState.topics.forEach((t, idx) => {
+      const btn = document.createElement('button');
+      const isLocked = (appState.unlockPhase === 0 && idx > 0);
+      btn.className = 'topic-btn' + (t.id === currentTopicId ? ' active' : '') + (isLocked ? ' locked' : '');
+      btn.textContent = t.name;
+      btn.onclick = () => {
+        currentTopicId = t.id;
+        renderTopicBar();
+        renderMemos();
+      };
+      bar.appendChild(btn);
+    });
+
+    if (appState.unlockPhase >= 1) {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'add-topic-btn';
+      addBtn.textContent = '＋部屋を追加';
+      addBtn.onclick = addNewTopic;
+      bar.appendChild(addBtn);
+    }
+  }
+
+  function addNewTopic() {
+    const name = prompt('新しい部屋（トピック）の名前を入力してください\n例：🎮 ゲーム構想、☕ 日常ルーティン');
+    if (!name || !name.trim()) return;
+    const purpose = prompt('この部屋の「外れない付箋（スタンス・目的）」を入力してください\n（※後からいつでも書き換えられます）', '自分のペースで気楽に楽しむ場所');
+    const newId = 'topic_' + Date.now();
+    appState.topics.push({
+      id: newId,
+      name: name.trim(),
+      purpose: purpose ? purpose.trim() : '自分のペースで楽しむ場所',
+      memos: []
+    });
+    currentTopicId = newId;
+    saveState();
+    renderTopicBar();
+    renderMemos();
+  }
+
+  function getCurrentTopic() {
+    return appState.topics.find(t => t.id === currentTopicId) || appState.topics[0];
+  }
+
+  // 付箋ボードの描画（2列グリッド・ピン留め優先）
+  function renderMemos() {
+    const topic = getCurrentTopic();
+    document.getElementById('sticky-topic-title').textContent = `📌 ${topic.name} のスタンス（外れない付箋）`;
+    document.getElementById('sticky-topic-purpose').textContent = topic.purpose;
+
+    const list = document.getElementById('memo-list');
+    list.innerHTML = '';
+
+    // ピン留めを上にソートして表示
+    const sorted = topic.memos.map((m, idx) => ({ ...m, origIndex: idx }))
+                              .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+
+    sorted.forEach(m => {
+      const note = document.createElement('div');
+      note.className = `sticky-note ${m.color || 'yellow'} ${m.pinned ? 'pinned' : ''}`;
+      const angle = m.angle || 0;
+      note.style.transform = `rotate(${angle}deg)`;
+
+      note.innerHTML = `
+        <div class="sticky-body" contenteditable="true" oninput="updateMemoText(${m.origIndex}, this.textContent)">${escapeHtml(m.text)}</div>
+        <div class="sticky-footer">
+          <span>${m.pinned ? '📌 固定中' : m.date}</span>
+          <div class="sticky-actions">
+            <button class="sticky-act-btn" onclick="cycleMemoColor(${m.origIndex})" title="色を変える">🎨</button>
+            <button class="sticky-act-btn" onclick="togglePinMemo(${m.origIndex})" title="ピン留め切替">📌</button>
+            <button class="sticky-act-btn" onclick="deleteMemo(${m.origIndex})" title="剥がす">×</button>
+          </div>
+        </div>
+      `;
+      list.appendChild(note);
+    });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // 付箋のカラー選択
+  function selectColor(color, label, el) {
+    selectedColor = color;
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('color-hint').textContent = label;
+  }
+
+  // 付箋を貼る
+  function addMemo() {
+    const input = document.getElementById('memo-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const topic = getCurrentTopic();
+    const randomAngle = ((Math.random() * 2.6) - 1.3).toFixed(2);
+    const now = new Date();
+    const dateStr = `${now.getMonth()+1}/${now.getDate()}`;
+
+    topic.memos.unshift({
+      text: text,
+      color: selectedColor,
+      date: dateStr,
+      pinned: false,
+      angle: parseFloat(randomAngle)
+    });
+
+    input.value = '';
+
+    // 段階的アンロックの進行
+    if (appState.unlockPhase === 0) {
+      appState.unlockPhase = 1;
+      document.getElementById('ibo-banner-text').innerHTML = 
+        '<strong>🎉 部屋（トピック）機能が解放！</strong><br>もう1枚付箋を貼ると、画面上部に「▼ MY POLICY」の引き出しが出現するよ！';
+    } else if (appState.unlockPhase === 1) {
+      appState.unlockPhase = 2;
+      document.getElementById('ibo-banner-text').innerHTML = 
+        '<strong>✨ 全機能アンロック！</strong><br>一番上の「▼ MY POLICY」をタップして、自分のベース（座右の銘やスタンス）を確認してみて！';
+    }
+
+    saveState();
+    applyUnlockUI();
+    renderTopicBar();
+    renderMemos();
+  }
+
+  function updateMemoText(idx, newText) {
+    const topic = getCurrentTopic();
+    if (topic.memos[idx]) {
+      topic.memos[idx].text = newText;
+      saveState();
+    }
+  }
+
+  function cycleMemoColor(idx) {
+    const colors = ['yellow', 'blue', 'pink', 'green'];
+    const topic = getCurrentTopic();
+    const current = topic.memos[idx].color || 'yellow';
+    const next = colors[(colors.indexOf(current) + 1) % colors.length];
+    topic.memos[idx].color = next;
+    saveState();
+    renderMemos();
+  }
+
+  function togglePinMemo(idx) {
+    const topic = getCurrentTopic();
+    topic.memos[idx].pinned = !topic.memos[idx].pinned;
+    saveState();
+    renderMemos();
+  }
+
+  function deleteMemo(idx) {
+    const topic = getCurrentTopic();
+    topic.memos.splice(idx, 1);
+    saveState();
+    renderMemos();
+  }
+
+  // 自動保存ハンドラ群
+  function savePolicies() {
+    appState.policies.primary = document.getElementById('pol-primary').textContent;
+    appState.policies.trans   = document.getElementById('pol-trans').textContent;
+    appState.policies.monthly = document.getElementById('pol-monthly').textContent;
+    appState.policies.daily   = document.getElementById('pol-daily').textContent;
+    saveState();
+  }
+
+  function saveTopicPurpose() {
+    const topic = getCurrentTopic();
+    topic.purpose = document.getElementById('sticky-topic-purpose').textContent;
+    saveState();
+  }
+
+  function saveProfileMemo() {
+    appState.profileMemo = document.getElementById('profile-memo').textContent;
+    saveState();
+  }
+
+  // 言語化BOOKの描画＆追加
+  function renderBooks() {
+    const container = document.getElementById('book-list');
+    container.innerHTML = '';
+    appState.books.forEach((b, idx) => {
+      const card = document.createElement('div');
+      card.className = 'book-card';
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="book-scene">${escapeHtml(b.scene || 'マイルール')}</span>
+          <button onclick="deleteBook(${idx})" style="background:none;border:none;color:#adb5bd;cursor:pointer;font-size:12px;">×</button>
+        </div>
+        <div class="book-phrase">${escapeHtml(b.phrase)}</div>
+        <div class="book-source">出典：${escapeHtml(b.source || '自分の気づき')}</div>
+        <div class="book-usecase">${escapeHtml(b.usecase || '')}</div>
+        <div style="display:flex; gap:6px;">
+          <button class="pin-btn" onclick="pinToPolicy('${escapeHtml(b.phrase).replace(/'/g, "\\'")}')">🧭 今月のスタンスに採用</button>
+          <button class="pin-btn" onclick="copyBookToSticky('${escapeHtml(b.phrase).replace(/'/g, "\\'")}')">📌 玄関の付箋に貼る</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function addBookEntry() {
+    const phrase = document.getElementById('book-phrase-in').value.trim();
+    if (!phrase) return;
+    const source = document.getElementById('book-source-in').value.trim();
+    const scene  = document.getElementById('book-scene-in').value.trim();
+    const usecase = document.getElementById('book-use-in').value.trim();
+
+    appState.books.unshift({
+      phrase: `「${phrase}」`,
+      source: source || '自分のコレクション',
+      scene: scene || '大切にしたい視点',
+      usecase: usecase || 'ふとした時に立ち返るための言葉。'
+    });
+
+    document.getElementById('book-phrase-in').value = '';
+    document.getElementById('book-source-in').value = '';
+    document.getElementById('book-scene-in').value = '';
+    document.getElementById('book-use-in').value = '';
+
+    saveState();
+    renderBooks();
+  }
+
+  function deleteBook(idx) {
+    appState.books.splice(idx, 1);
+    saveState();
+    renderBooks();
+  }
+
+  function pinToPolicy(phrase) {
+    appState.policies.monthly = phrase;
+    document.getElementById('pol-monthly').textContent = phrase;
+    saveState();
+    document.getElementById('policy-drawer').classList.add('open');
+  }
+
+  function copyBookToSticky(phrase) {
+    appState.topics[0].memos.unshift({
+      text: phrase,
+      color: 'pink',
+      date: 'BOOKより',
+      pinned: true,
+      angle: -0.7
+    });
+    currentTopicId = 'quick';
+    saveState();
+    renderTopicBar();
+    renderMemos();
+    switchTab('tab-board', document.querySelector('.nav-item'));
+  }
+
+  // チャット機能（ワンタップ付箋化ボタンつき）
+  function triggerChatMode(mode) {
+    const box = document.getElementById('chat-box');
+    let reply = '';
+    if (mode === 'question') {
+      reply = '【🎲 今日の1問】<br>最近見たアニメや物語のキャラで、「自分だったら絶対こうするのに！」とか「このスタンス好きだな」と思った場面はある？';
+    } else if (mode === 'detox') {
+      reply = '【🗣️ 愚痴から本音抽出】<br>世の中や人間関係で「なんかおかしいな」と思ったことを吐き出してみて！その裏にある君の『譲れない芯』を付箋にするよ。';
+    } else if (mode === 'role') {
+      reply = '【🎭 今日のロール決め】<br>今日はどんな役回りで過ごす？<br>① ただ気楽に作品を楽しむ『鑑賞者』<br>② アイデアの種を拾う『妄想建築家』<br>③ 徹底的にのんびりする『休息の達人』';
+    }
+    box.innerHTML += `<div class="msg bot">${reply}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function sendChat() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+    const box = document.getElementById('chat-box');
+    box.innerHTML += `<div class="msg user">${escapeHtml(text)}</div>`;
+    input.value = '';
+
+    const safeText = escapeHtml(text).replace(/'/g, "\\'");
+    setTimeout(() => {
+      box.innerHTML += `
+        <div class="msg bot">
+          「${escapeHtml(text)}」——すごく大事な視点だね！<br>
+          忘れないように、このまま玄関のピンク付箋（大事な言葉）として貼っておく？<br>
+          <button onclick="copyBookToSticky('${safeText}')" style="margin-top:6px; background:var(--accent); color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:bold;">📌 これを付箋にして貼る</button>
+        </div>`;
+      box.scrollTop = box.scrollHeight;
+    }, 400);
+  }
+
+  // UI切り替え系
+  function togglePolicyDrawer() {
+    document.getElementById('policy-drawer').classList.toggle('open');
+  }
+
+  function switchTab(tabId, navBtn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    if (navBtn) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      navBtn.classList.add('active');
+    }
+  }
+
+  function changeIboStyle(icon, name, idx) {
+    appState.iboIcon = icon;
+    appState.iboStyleIndex = idx;
+    document.getElementById('ibo-mini-icon').textContent = icon;
+    document.querySelectorAll('.style-select-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === idx);
+    });
+    document.getElementById('ibo-banner-text').innerHTML = `相棒を<strong>「${name}」</strong>に切り替えたよ！（自動保存済）`;
+    saveState();
+  }
+
+  function unlockAll() {
+    appState.unlockPhase = 2;
+    saveState();
+    applyUnlockUI();
+    renderTopicBar();
+  }
+
+  function resetAllData() {
+    if (!confirm('保存されている付箋やポリシーを初期状態にリセットしますか？')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    appState = JSON.parse(JSON.stringify(defaultState));
+    currentTopicId = 'quick';
+    initApp();
+    document.getElementById('policy-drawer').classList.remove('open');
+  }
+
+  // 起動
+  initApp();
+</script>
+</body>
+</html>
