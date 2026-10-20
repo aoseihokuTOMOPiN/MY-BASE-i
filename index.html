@@ -1,0 +1,2600 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MY BASE i</title>
+<style>
+  :root {
+    /* レイヤー1: テーマ別カラー変数 (デフォルトはライト) */
+    --bg-layer1: #f2f4f8;
+    --text-main: #1c1e21;
+    --text-sub: #606770;
+    --glass-bg: rgba(255, 255, 255, 0.68);
+    --glass-border: rgba(255, 255, 255, 0.75);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --solid-board-bg: #e6ebf2;
+    --solid-guideline-bg: #eef2f7;
+    --card-inner-bg: rgba(255, 255, 255, 0.75);
+    --accent-color: #007aff;
+    --danger-color: #ff3b30;
+
+    /* 付箋カラー (4色) */
+    --note-yellow: #fff6b3;
+    --note-blue: #cdeeff;
+    --note-pink: #ffd6e0;
+    --note-green: #d4f7d4;
+    --note-text: #1c1e21;
+  }
+
+  /* テーマカラーバリエーション (レイヤー1: 全8色) */
+  [data-theme="dark"] {
+    --bg-layer1: #0a0b0e;
+    --text-main: #f0f2f5;
+    --text-sub: #9ea4b0;
+    --glass-bg: rgba(30, 34, 42, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    --solid-board-bg: #1c2029;
+    --solid-guideline-bg: #181b24;
+    --card-inner-bg: rgba(45, 50, 62, 0.75);
+    --accent-color: #3897f0;
+  }
+  [data-theme="light"] {
+    --bg-layer1: #ffffff;
+    --solid-board-bg: #f0f3f7;
+    --solid-guideline-bg: #f7f9fc;
+  }
+  [data-theme="skyblue"] {
+    --bg-layer1: #cbeeff;
+    --solid-board-bg: #b3e3fa;
+    --solid-guideline-bg: #c2ebff;
+  }
+  [data-theme="paleblue"] {
+    --bg-layer1: #d4e3ff;
+    --solid-board-bg: #bdd2fa;
+    --solid-guideline-bg: #c9dcff;
+  }
+  [data-theme="mint"] {
+    --bg-layer1: #dbf0dc;
+    --solid-board-bg: #c5e3c7;
+    --solid-guideline-bg: #d2ebd3;
+  }
+  [data-theme="cream"] {
+    --bg-layer1: #faf6d4;
+    --solid-board-bg: #f0eab8;
+    --solid-guideline-bg: #f7f2c8;
+  }
+  [data-theme="pink"] {
+    --bg-layer1: #ffdfdb;
+    --solid-board-bg: #f7c9c3;
+    --solid-guideline-bg: #ffd5cf;
+  }
+  [data-theme="lavender"] {
+    --bg-layer1: #efd6ff;
+    --solid-board-bg: #e0bdf7;
+    --solid-guideline-bg: #e9c9ff;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    margin: 0;
+    padding: 0;
+  }
+
+  body, html {
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+    color: var(--text-main);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  input, textarea {
+    user-select: text;
+    -webkit-user-select: text;
+    font-family: inherit;
+  }
+
+  /* =========================================
+     レイヤー1: 背景 (Background) [z-index: 1]
+  ========================================= */
+  #layer1-bg {
+    position: fixed;
+    inset: 0;
+    background-color: var(--bg-layer1);
+    transition: background-color 0.35s ease;
+    z-index: 1;
+  }
+
+  /* =========================================
+     レイヤー2: メイン画面 (Main View) [z-index: 10]
+  ========================================= */
+  #layer2-main {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: max(12px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
+    pointer-events: none;
+  }
+  #layer2-main > * {
+    pointer-events: auto;
+  }
+
+  /* 最上部ヘッダーバー (L2-01, L2-02) */
+  .top-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 4px;
+    flex-shrink: 0;
+    z-index: 12;
+  }
+  .app-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .phase-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-sub);
+  }
+  .clear-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .clear-btn:active {
+    transform: scale(0.92);
+  }
+
+  /* 中央領域 (L2-03: カラーパレット & 各タブ画面) */
+  .center-stage {
+    flex: 1;
+    min-height: 0;
+    margin: 8px 0 12px 14px; /* 左側はクイックボードの見切れ分少し空ける */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* カラーパレットコンテナ */
+  .palette-card {
+    flex: 1;
+    min-height: 0;
+    border-radius: 26px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    transition: background-color 0.3s ease, transform 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* パレットのカラーバリエーション */
+  .palette-color-sky { background: rgba(135, 206, 250, 0.38); }
+  .palette-color-mint { background: rgba(152, 235, 178, 0.38); }
+  .palette-color-peach { background: rgba(255, 182, 193, 0.38); }
+  .palette-color-lavender { background: rgba(216, 180, 248, 0.38); }
+  .palette-color-amber { background: rgba(255, 222, 145, 0.38); }
+  .palette-color-slate { background: rgba(180, 195, 210, 0.38); }
+
+  /* L2-08: カラーパレット内ヘッダー */
+  .palette-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .palette-title-bar {
+    flex: 1;
+    background: var(--card-inner-bg);
+    border: 1px solid var(--glass-border);
+    padding: 7px 12px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .palette-nav-arrows {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .nav-arrow-btn {
+    border: none;
+    background: rgba(0,0,0,0.07);
+    color: var(--text-main);
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .palette-settings-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--text-main);
+    color: var(--bg-layer1);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* L2-08: パレット内ポリシー (外れない目的付箋) */
+  .palette-policy-box {
+    background: rgba(255, 159, 67, 0.25);
+    border: 1.5px solid rgba(255, 159, 67, 0.55);
+    border-radius: 16px;
+    padding: 9px 14px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .palette-policy-box span.policy-label {
+    font-size: 0.68rem;
+    opacity: 0.75;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* L2-08: 付せん作成欄 (タップでレイヤー5起動) */
+  .note-creator-bar {
+    background: rgba(255, 105, 180, 0.2);
+    border: 1.5px solid rgba(255, 105, 180, 0.45);
+    border-radius: 14px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .color-dots-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .color-dot.active {
+    transform: scale(1.25);
+    border-color: var(--text-main);
+  }
+  .dot-yellow { background: var(--note-yellow); }
+  .dot-blue { background: var(--note-blue); }
+  .dot-pink { background: var(--note-pink); }
+  .dot-green { background: var(--note-green); }
+
+  .fake-input-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .fake-input-box {
+    flex: 1;
+    background: var(--card-inner-bg);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    color: var(--text-sub);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fake-submit-btn {
+    background: var(--text-main);
+    color: var(--bg-layer1);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+
+  /* L2-08: ボード内コンテンツ領域 (付箋 / リスト / 無地) */
+  .palette-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  /* 形態1: 付箋モード (2列グリッド) */
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding-bottom: 12px;
+  }
+  .sticky-note {
+    border-radius: 14px;
+    padding: 10px;
+    color: var(--note-text);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 96px;
+    position: relative;
+    transition: transform 0.15s;
+    word-break: break-word;
+  }
+  .sticky-note.yellow { background: var(--note-yellow); }
+  .sticky-note.blue { background: var(--note-blue); }
+  .sticky-note.pink { background: var(--note-pink); }
+  .sticky-note.green { background: var(--note-green); }
+  .sticky-note.pinned {
+    outline: 2px solid rgba(0, 0, 0, 0.35);
+  }
+  .note-content {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+    cursor: pointer;
+    flex: 1;
+  }
+  .note-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(0,0,0,0.07);
+    padding-top: 5px;
+    font-size: 0.75rem;
+  }
+  .note-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .note-act-btn {
+    border: none;
+    background: rgba(255,255,255,0.55);
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+
+  /* 形態2: リストモード (ToDo) */
+  .todo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 12px;
+  }
+  .todo-item {
+    background: var(--card-inner-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .todo-item.done .todo-text {
+    text-decoration: line-through;
+    opacity: 0.5;
+  }
+  .todo-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent-color);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .todo-text {
+    flex: 1;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    cursor: pointer;
+  }
+
+  /* 形態3: 無地モード (フリーノート・日記) */
+  .plain-note-wrap {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .plain-textarea {
+    width: 100%;
+    flex: 1;
+    background: var(--card-inner-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 14px;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--text-main);
+    resize: none;
+    outline: none;
+  }
+
+  /* 下部ナビゲーションエリア (L2-04, L2-05, L2-06, L2-07) */
+  .bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+    gap: 10px;
+    flex-shrink: 0;
+    z-index: 12;
+  }
+  .circle-dock-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1.5px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--text-main);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .trash-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    background: var(--danger-color);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+  }
+  .main-tab-capsule {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1.5px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    padding: 5px 8px;
+    border-radius: 28px;
+    transition: all 0.3s ease;
+  }
+  .tab-pill-btn {
+    min-width: 42px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-sub);
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tab-pill-btn.active {
+    background: var(--text-main);
+    color: var(--bg-layer1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+
+  /* =========================================
+     レイヤー3: クイックボード (Quick Board) [z-index: 30]
+     左端から右へ引き出す透過しない同系色の板
+  ========================================= */
+  #layer3-quickboard {
+    position: fixed;
+    top: max(62px, calc(env(safe-area-inset-top) + 52px));
+    bottom: max(74px, calc(env(safe-area-inset-bottom) + 64px));
+    left: 0;
+    width: calc(100% - 28px);
+    max-width: 500px;
+    background-color: var(--solid-board-bg);
+    border: 2px solid var(--glass-border);
+    border-left: none;
+    border-radius: 0 26px 26px 0;
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.18);
+    z-index: 30;
+    transform: translateX(calc(-100% + 10px));
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s;
+    display: flex;
+    flex-direction: column;
+    padding: 14px;
+    gap: 10px;
+  }
+  #layer3-quickboard.open {
+    transform: translateX(0);
+  }
+  /* クイックボードのツマミ (突起) */
+  .quickboard-tab-handle {
+    position: absolute;
+    top: 38px;
+    right: -24px;
+    width: 24px;
+    height: 84px;
+    background-color: var(--solid-board-bg);
+    border: 2px solid var(--glass-border);
+    border-left: none;
+    border-radius: 0 12px 12px 0;
+    box-shadow: 4px 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    writing-mode: vertical-rl;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--text-sub);
+    letter-spacing: 2px;
+  }
+
+  /* =========================================
+     レイヤー4: マイガイドライン (My Guideline) [z-index: 40]
+     上端中央から下へ引き下ろすシェード
+  ========================================= */
+  #layer4-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.25);
+    z-index: 39;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  #layer4-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #layer4-guideline {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    max-width: 600px;
+    margin: 0 auto;
+    height: 70dvh;
+    background-color: var(--solid-guideline-bg);
+    border-bottom: 2px solid var(--glass-border);
+    border-radius: 0 0 28px 28px;
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.22);
+    z-index: 40;
+    transform: translateY(-100%);
+    transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s;
+    display: flex;
+    flex-direction: column;
+    padding: max(14px, env(safe-area-inset-top)) 16px 12px;
+  }
+  #layer4-guideline.open {
+    transform: translateY(0);
+  }
+  /* 格納時に上部中央に顔を出すハンドルバー (案A) */
+  .guideline-pull-handle {
+    position: absolute;
+    bottom: -26px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 26px;
+    padding: 0 20px;
+    background-color: var(--solid-guideline-bg);
+    border: 1.5px solid var(--glass-border);
+    border-top: none;
+    border-radius: 0 0 14px 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--text-sub);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .guideline-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 6px 2px;
+  }
+  .guideline-level-card {
+    background: var(--card-inner-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+  .guideline-level-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    margin-bottom: 6px;
+  }
+  .guideline-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 0;
+    border-top: 1px dashed rgba(128,128,128,0.2);
+    font-size: 0.86rem;
+  }
+  .guideline-item-row:first-of-type {
+    border-top: none;
+  }
+
+  /* =========================================
+     レイヤー5: 入力時レイヤー (Floating Input) [z-index: 50]
+  ========================================= */
+  #layer5-input-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 50;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+  }
+  #layer5-input-overlay.open {
+    display: flex;
+  }
+  .floating-input-box {
+    width: 100%;
+    max-width: 520px;
+    background: var(--solid-board-bg);
+    border: 1.5px solid var(--glass-border);
+    border-radius: 22px;
+    padding: 14px;
+    box-shadow: 0 -4px 32px rgba(0,0,0,0.28);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+  .layer5-textarea {
+    width: 100%;
+    min-height: 90px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    background: var(--card-inner-bg);
+    color: var(--text-main);
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+  }
+
+  /* =========================================
+     レイヤー6: ダイアログ用レイヤー (System Dialog) [z-index: 60]
+  ========================================= */
+  #layer6-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 60;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #layer6-dialog-overlay.open {
+    display: flex;
+  }
+  .ios-dialog-box {
+    width: 100%;
+    max-width: 340px;
+    background: var(--solid-guideline-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+    text-align: center;
+  }
+  .dialog-header {
+    padding: 18px 16px 14px;
+  }
+  .dialog-title {
+    font-size: 1.02rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .dialog-desc {
+    font-size: 0.82rem;
+    color: var(--text-sub);
+    line-height: 1.45;
+  }
+  .dialog-body-custom {
+    padding: 0 16px 14px;
+    text-align: left;
+    max-height: 55dvh;
+    overflow-y: auto;
+  }
+  .dialog-btn-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid rgba(128,128,128,0.25);
+  }
+  .dialog-action-btn {
+    width: 100%;
+    padding: 13px 16px;
+    border: none;
+    border-bottom: 1px solid rgba(128,128,128,0.2);
+    background: transparent;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    cursor: pointer;
+  }
+  .dialog-action-btn:last-child {
+    border-bottom: none;
+  }
+  .dialog-action-btn.danger {
+    color: var(--danger-color);
+    font-weight: 700;
+  }
+  .dialog-action-btn.cancel {
+    color: var(--text-sub);
+    font-weight: 700;
+  }
+
+  /* 汎用フォーム・設定リストパーツ */
+  .ios-list-group {
+    background: var(--card-inner-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .ios-list-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+  }
+  .theme-swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .theme-swatch-btn {
+    height: 36px;
+    border-radius: 10px;
+    border: 2px solid rgba(128,128,128,0.35);
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .theme-swatch-btn.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px var(--accent-color);
+  }
+
+  /* トースト通知 */
+  #toast-msg {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(20, 22, 28, 0.88);
+    color: #fff;
+    padding: 9px 18px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    z-index: 80;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+  }
+  #toast-msg.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body data-theme="light">
+
+<!-- =========================================
+     レイヤー1: 背景 (Background)
+========================================= -->
+<div id="layer1-bg"></div>
+
+<!-- =========================================
+     レイヤー2: メイン画面 (Main View)
+========================================= -->
+<div id="layer2-main">
+  <!-- 最上部ヘッダー: L2-01 タイトル & L2-02 クリアボタン -->
+  <header class="top-header">
+    <div class="app-title">
+      <span>MY BASE i</span>
+      <span id="phase-indicator" class="phase-badge">Phase 0</span>
+    </div>
+    <button class="clear-btn" id="btn-clear-menu" title="クリア・解放メニュー">●</button>
+  </header>
+
+  <!-- 中央領域: L2-03 カラーパレット または 各タブコンテンツ -->
+  <main class="center-stage" id="center-stage-area">
+    <!-- JSで現在選択中のタブ (M / i / B / P / iT) を描画 -->
+  </main>
+
+  <!-- 下部バー: L2-05 ゴミ箱 / L2-04 メインタブ / L2-06 設定ボタン -->
+  <footer class="bottom-bar">
+    <button class="circle-dock-btn" id="btn-open-trash" title="ゴミ箱">
+      🗑️
+      <span id="trash-count-badge" class="trash-badge hidden">0</span>
+    </button>
+
+    <nav class="main-tab-capsule" id="main-tab-dock">
+      <!-- アンロック状況に応じて JS で描画 (iT | i | M | B | P) -->
+    </nav>
+
+    <button class="circle-dock-btn" id="btn-open-settings" title="全体設定">⚙️</button>
+  </footer>
+</div>
+
+<!-- =========================================
+     レイヤー3: クイックボード (左からの横型プルダウン)
+========================================= -->
+<aside id="layer3-quickboard">
+  <div class="quickboard-tab-handle" id="quickboard-handle" title="クイックボードを開閉">QUICK</div>
+  
+  <div class="palette-header">
+    <div class="palette-title-bar">
+      <span>⚡ クイックボード (玄関)</span>
+      <span style="font-size:0.72rem; color:var(--text-sub); font-weight:500;">とりあえず貼る板</span>
+    </div>
+  </div>
+
+  <!-- クイックボード用 付せん作成欄 -->
+  <div class="note-creator-bar" id="quick-creator-trigger">
+    <div class="color-dots-row" onclick="event.stopPropagation()">
+      <span class="color-dot dot-yellow active" data-qcolor="yellow"></span>
+      <span class="color-dot dot-blue" data-qcolor="blue"></span>
+      <span class="color-dot dot-pink" data-qcolor="pink"></span>
+      <span class="color-dot dot-green" data-qcolor="green"></span>
+      <span style="font-size:0.7rem; color:var(--text-sub); margin-left:auto;">タップして入力</span>
+    </div>
+    <div class="fake-input-row">
+      <div class="fake-input-box">今ふと思ったこと・メモを貼る...</div>
+      <div class="fake-submit-btn">＋貼る</div>
+    </div>
+  </div>
+
+  <!-- クイックボード内 付箋一覧 -->
+  <div class="palette-body">
+    <div class="notes-grid" id="quickboard-notes-grid"></div>
+  </div>
+</aside>
+
+<!-- =========================================
+     レイヤー4: マイガイドライン (上からの縦型プルダウン)
+========================================= -->
+<div id="layer4-backdrop"></div>
+<section id="layer4-guideline">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+    <div>
+      <div style="font-size:0.98rem; font-weight:800;">🧭 マイガイドライン</div>
+      <div id="guideline-calendar-label" style="font-size:0.72rem; color:var(--text-sub);"></div>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button class="nav-arrow-btn" style="width:auto; padding:0 10px; font-weight:700;" id="btn-guideline-period-check">📅 期間切替テスト</button>
+      <button class="nav-arrow-btn" style="width:auto; padding:0 10px; font-weight:700;" id="btn-guideline-config">表示設定</button>
+    </div>
+  </div>
+
+  <div class="guideline-content" id="guideline-list-container"></div>
+
+  <!-- 下端中央のプルダウンハンドルバー (Phase 2で表示) -->
+  <div class="guideline-pull-handle hidden" id="guideline-handle">
+    <span>▼ MY GUIDELINE</span>
+  </div>
+</section>
+
+<!-- =========================================
+     レイヤー5: 入力時レイヤー (Floating Input Layer)
+========================================= -->
+<div id="layer5-input-overlay">
+  <div class="floating-input-box" onclick="event.stopPropagation()">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span id="layer5-title" style="font-size:0.82rem; font-weight:800; color:var(--text-sub);">付せんを作成</span>
+      <div class="color-dots-row" id="layer5-color-picker">
+        <span class="color-dot dot-yellow active" data-l5color="yellow"></span>
+        <span class="color-dot dot-blue" data-l5color="blue"></span>
+        <span class="color-dot dot-pink" data-l5color="pink"></span>
+        <span class="color-dot dot-green" data-l5color="green"></span>
+      </div>
+    </div>
+    <textarea id="layer5-textarea" class="layer5-textarea" placeholder="ここに入力してください..."></textarea>
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <button class="nav-arrow-btn" style="width:auto; padding:8px 14px; border-radius:10px;" id="btn-layer5-cancel">キャンセル</button>
+      <button class="fake-submit-btn" style="border:none; padding:8px 18px; border-radius:10px; cursor:pointer;" id="btn-layer5-submit">決定</button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================
+     レイヤー6: ダイアログ用レイヤー (System & Action Dialogs)
+========================================= -->
+<div id="layer6-dialog-overlay">
+  <div class="ios-dialog-box" onclick="event.stopPropagation()">
+    <div class="dialog-header">
+      <div class="dialog-title" id="dialog-title">確認</div>
+      <div class="dialog-desc" id="dialog-desc"></div>
+    </div>
+    <div class="dialog-body-custom hidden" id="dialog-custom-body"></div>
+    <div class="dialog-btn-list" id="dialog-btn-list"></div>
+  </div>
+</div>
+
+<!-- トースト通知 -->
+<div id="toast-msg"></div>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'mbi_data_v1_2';
+
+  // カレンダー情報の取得
+  function getCalendarStamps() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth() + 1;
+    const d = now.getDate();
+    const weekNum = Math.ceil(d / 7);
+    return {
+      year: `${y}年`,
+      month: `${y}年${m}月`,
+      week: `${y}年${m}月 第${weekNum}週`,
+      day: `${y}年${m}月${d}日`
+    };
+  }
+
+  // 初期データ生成
+  function createDefaultData() {
+    const stamps = getCalendarStamps();
+    return {
+      theme: 'light',
+      phase: 0,
+      totalNotesCreated: 0,
+      activeTab: 'M',
+      activePaletteIndex: 0,
+      quickColor: 'yellow',
+      paletteDraftColor: 'yellow',
+      confirmBeforeRemove: true,
+      ibohStyle: 'stickman',
+      calendarStamps: stamps,
+      guidelines: {
+        levels: {
+          primary: { label: '🌟 プライマリ (座右の銘・自分の翻訳)', enabled: true, items: ['「楽しめばええやん」— 生産性に縛られず今を味わう'] },
+          yearly:  { label: `📅 年間スタンス (${stamps.year})`, enabled: true, items: ['自分のペースと尊厳を最優先に守る'] },
+          monthly: { label: `🌙 月間スタンス (${stamps.month})`, enabled: true, items: ['心が動いた作品を言葉にして残す'] },
+          weekly:  { label: `🗓️ 週間スタンス (${stamps.week})`, enabled: false, items: ['睡眠と休息の時間を削らない'] },
+          daily:   { label: `☀️ 日次ロール・クエスト (${stamps.day})`, enabled: true, items: ['ロール：物語と世界の観測者'] }
+        }
+      },
+      quickNotes: [
+        { id: 'qn-1', text: '左端のツマミでいつでも開閉できる「クイックボード」です！\n✈️ボタンで好きなパレットへ移動できます。', color: 'yellow', pinned: false, createdAt: Date.now() }
+      ],
+      palettes: [
+        {
+          id: 'pal-1',
+          title: 'マイベース (見本パレット)',
+          color: 'sky',
+          mode: 'sticky', // 'sticky' | 'todo' | 'plain'
+          todoDoneRule: 'keep', // 'keep' | 'trash' | 'delete'
+          policy: 'まずは思いついたことを2枚貼って、秘密基地を拡張しよう！',
+          notes: [
+            { id: 'n-sample-1', text: 'ようこそ MY BASE i へ！\n付箋をあと2枚貼ると「パレット追加」が、4枚貼ると「マイガイドライン」が解放されます。', color: 'yellow', pinned: true, createdAt: Date.now() },
+            { id: 'n-sample-2', text: '右上の「●」ボタンから、いつでも一発で【全機能解放】もできます。', color: 'blue', pinned: false, createdAt: Date.now() }
+          ],
+          todos: [
+            { id: 'td-1', text: '付箋を貼ってPhase 1を解放する', done: false }
+          ],
+          plainText: 'ここは無地モード（フリーノート・日記）に切り替えた時のキャンバスです。\n玄関から付箋を飛ばすと、この末尾に自動で文章が追記されます。'
+        }
+      ],
+      bookItems: [],
+      profile: {
+        coreValues: '自分のペースを守ること、無理な同調をしないこと',
+        comfortPace: '1人の時間とインプットの時間を毎日確保する',
+        likesDislikes: '好き：物語の考察、音楽、静かな空間\n苦手：目的のない形式的な集まり',
+        freeMemo: ''
+      },
+      itubeItems: [],
+      trashItems: []
+    };
+  }
+
+  let state = loadState();
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return createDefaultData();
+      const parsed = JSON.parse(raw);
+      return Object.assign(createDefaultData(), parsed);
+    } catch (e) {
+      return createDefaultData();
+    }
+  }
+
+  function saveState() {
+    // 半年（180日）経過したゴミ箱アイテムの自動パージ
+    const halfYearMs = 180 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    state.trashItems = (state.trashItems || []).filter(item => (now - (item.deletedAt || now)) < halfYearMs);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById('toast-msg');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  // 段階的アンロック判定 (2枚でPhase 1、4枚でPhase 2)
+  function checkUnlockProgression() {
+    const prevPhase = state.phase;
+    if (state.totalNotesCreated >= 4 && state.phase < 2) {
+      state.phase = 2;
+    } else if (state.totalNotesCreated >= 2 && state.phase < 1) {
+      state.phase = 1;
+    }
+    if (state.phase > prevPhase) {
+      if (state.phase === 1) {
+        showToast('🎉 Phase 1解放！パレットの追加＆横スワイプが可能になりました');
+      } else if (state.phase === 2) {
+        showToast('🌟 Phase 2全解放！上部マイガイドラインと全タブが出現しました');
+      }
+    }
+  }
+
+  // =========================================
+  // 全体レンダリング
+  // =========================================
+  function renderAll() {
+    // レイヤー1: 背景テーマ適用
+    document.body.setAttribute('data-theme', state.theme || 'light');
+
+    // ヘッダーのPhaseバッジ
+    const phaseEl = document.getElementById('phase-indicator');
+    phaseEl.textContent = state.phase >= 2 ? 'FULL BASE' : `Phase ${state.phase}`;
+
+    // レイヤー4: マイガイドラインのハンドル表示制御 (Phase 2以上で表示)
+    const gHandle = document.getElementById('guideline-handle');
+    if (state.phase >= 2) {
+      gHandle.classList.remove('hidden');
+    } else {
+      gHandle.classList.add('hidden');
+      closeGuideline();
+    }
+
+    // ゴミ箱バッジ
+    const trashBadge = document.getElementById('trash-count-badge');
+    const tCount = (state.trashItems || []).length;
+    if (tCount > 0) {
+      trashBadge.textContent = tCount;
+      trashBadge.classList.remove('hidden');
+    } else {
+      trashBadge.classList.add('hidden');
+    }
+
+    renderBottomTabs();
+    renderCenterStage();
+    renderQuickBoard();
+    renderGuidelineSheet();
+    saveState();
+  }
+
+  // 下部カプセルタブ (L2-04 / L2-07)
+  function renderBottomTabs() {
+    const dock = document.getElementById('main-tab-dock');
+    const tabs = state.phase >= 2
+      ? [
+          { id: 'iT', label: 'iT' },
+          { id: 'i',  label: 'i' },
+          { id: 'M',  label: 'M' },
+          { id: 'B',  label: 'B' },
+          { id: 'P',  label: 'P' }
+        ]
+      : [
+          { id: 'i',  label: 'i' },
+          { id: 'M',  label: 'M' }
+        ];
+
+    if (!tabs.some(t => t.id === state.activeTab)) {
+      state.activeTab = 'M';
+    }
+
+    dock.innerHTML = '';
+    tabs.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = `tab-pill-btn ${state.activeTab === t.id ? 'active' : ''}`;
+      btn.textContent = t.label;
+      btn.onclick = () => {
+        state.activeTab = t.id;
+        renderAll();
+      };
+      dock.appendChild(btn);
+    });
+  }
+
+  // 中央領域 (L2-03) の描画分岐
+  function renderCenterStage() {
+    const stage = document.getElementById('center-stage-area');
+    stage.innerHTML = '';
+
+    if (state.activeTab === 'M') {
+      renderColorPaletteView(stage);
+    } else if (state.activeTab === 'i') {
+      renderIbohView(stage);
+    } else if (state.activeTab === 'B') {
+      renderBookView(stage);
+    } else if (state.activeTab === 'P') {
+      renderProfileView(stage);
+    } else if (state.activeTab === 'iT') {
+      renderITubeView(stage);
+    }
+  }
+
+  // =========================================
+  // Mタブ: カラーパレット描画 & 横スワイプ
+  // =========================================
+  function renderColorPaletteView(container) {
+    if (!state.palettes || state.palettes.length === 0) {
+      state.palettes = createDefaultData().palettes;
+    }
+    if (state.activePaletteIndex >= state.palettes.length) {
+      state.activePaletteIndex = state.palettes.length - 1;
+    }
+    if (state.activePaletteIndex < 0) state.activePaletteIndex = 0;
+
+    const pal = state.palettes[state.activePaletteIndex];
+    const card = document.createElement('div');
+    card.className = `palette-card palette-color-${pal.color || 'sky'}`;
+
+    // 左右スワイプ検知
+    let touchStartX = 0;
+    let touchStartY = 0;
+    card.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+    card.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].screenX - touchStartX;
+      const dy = e.changedTouches[0].screenY - touchStartY;
+      if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        if (dx < 0) {
+          // 左スワイプ (次のパレット または 新規追加)
+          if (state.activePaletteIndex < state.palettes.length - 1) {
+            state.activePaletteIndex++;
+            renderAll();
+          } else if (state.phase >= 1) {
+            openAddPaletteDialog();
+          } else {
+            showToast('付箋をあと少し貼るとパレット追加が解放されます');
+          }
+        } else {
+          // 右スワイプ (前のパレット)
+          if (state.activePaletteIndex > 0) {
+            state.activePaletteIndex--;
+            renderAll();
+          }
+        }
+      }
+    }, { passive: true });
+
+    const modeBadge = pal.mode === 'todo' ? '☑️ リスト' : (pal.mode === 'plain' ? '📄 無地' : '📌 付箋');
+
+    // ① パレットヘッダー (L2-08)
+    const header = document.createElement('div');
+    header.className = 'palette-header';
+    header.innerHTML = `
+      <div class="palette-title-bar">
+        <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+          <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(pal.title)}</span>
+          <span style="font-size:0.68rem; font-weight:600; opacity:0.65; flex-shrink:0;">(${state.activePaletteIndex + 1}/${state.palettes.length}・${modeBadge})</span>
+        </div>
+        <div class="palette-nav-arrows">
+          ${state.palettes.length > 1 ? `
+            <button class="nav-arrow-btn" id="pal-prev-btn">◀</button>
+            <button class="nav-arrow-btn" id="pal-next-btn">▶</button>
+          ` : ''}
+          ${state.phase >= 1 ? `<button class="nav-arrow-btn" id="pal-add-btn" title="新規パレット追加">＋</button>` : ''}
+        </div>
+      </div>
+      <button class="palette-settings-btn" id="pal-config-btn" title="パレット個別設定">⚙</button>
+    `;
+    card.appendChild(header);
+
+    // ② パレット内ポリシー (オレンジ枠)
+    const policyBox = document.createElement('div');
+    policyBox.className = 'palette-policy-box';
+    policyBox.innerHTML = `
+      <div style="flex:1;">
+        <span class="policy-label">🎯 パレット内ポリシー (外れない目的付箋)</span>
+        <div>${escapeHtml(pal.policy || 'タップしてこのパレットの目的・スタンスを設定...')}</div>
+      </div>
+      <span style="font-size:0.8rem; opacity:0.6;">✎</span>
+    `;
+    policyBox.onclick = () => {
+      openLayer5Input({
+        title: `🎯 「${pal.title}」のポリシーを編集`,
+        initialText: pal.policy || '',
+        hideColors: true,
+        onSave: (val) => {
+          pal.policy = val;
+          renderAll();
+        }
+      });
+    };
+    card.appendChild(policyBox);
+
+    // ③ 付せん・項目作成欄 (ピンク枠: 無地モード以外で表示)
+    if (pal.mode !== 'plain') {
+      const creatorBar = document.createElement('div');
+      creatorBar.className = 'note-creator-bar';
+      const isTodo = pal.mode === 'todo';
+      creatorBar.innerHTML = `
+        ${!isTodo ? `
+        <div class="color-dots-row" id="pal-color-dots">
+          <span class="color-dot dot-yellow ${state.paletteDraftColor === 'yellow' ? 'active' : ''}" data-pcolor="yellow"></span>
+          <span class="color-dot dot-blue ${state.paletteDraftColor === 'blue' ? 'active' : ''}" data-pcolor="blue"></span>
+          <span class="color-dot dot-pink ${state.paletteDraftColor === 'pink' ? 'active' : ''}" data-pcolor="pink"></span>
+          <span class="color-dot dot-green ${state.paletteDraftColor === 'green' ? 'active' : ''}" data-pcolor="green"></span>
+          <span style="font-size:0.68rem; color:var(--text-sub); margin-left:auto;">黄:雑記 / 青:クエスト / 桃:言葉 / 緑:考察</span>
+        </div>` : ''}
+        <div class="fake-input-row">
+          <div class="fake-input-box">${isTodo ? '新しいToDo・リマインダーを追加...' : 'タップして付箋を入力 (レイヤー5起動)...'}</div>
+          <div class="fake-submit-btn">＋追加</div>
+        </div>
+      `;
+
+      // 色丸ボタンのクリック
+      const dotsWrap = creatorBar.querySelector('#pal-color-dots');
+      if (dotsWrap) {
+        dotsWrap.onclick = e => {
+          e.stopPropagation();
+          const dot = e.target.closest('[data-pcolor]');
+          if (dot) {
+            state.paletteDraftColor = dot.getAttribute('data-pcolor');
+            renderAll();
+          }
+        };
+      }
+
+      creatorBar.onclick = () => {
+        openLayer5Input({
+          title: isTodo ? `☑️ 「${pal.title}」にToDoを追加` : `📌 「${pal.title}」に付箋を貼る`,
+          initialText: '',
+          initialColor: state.paletteDraftColor,
+          hideColors: isTodo,
+          onSave: (text, color) => {
+            if (!text.trim()) return;
+            if (isTodo) {
+              pal.todos = pal.todos || [];
+              pal.todos.unshift({ id: 'td-' + Date.now(), text: text.trim(), done: false });
+            } else {
+              pal.notes = pal.notes || [];
+              pal.notes.unshift({ id: 'n-' + Date.now(), text: text.trim(), color: color || 'yellow', pinned: false, createdAt: Date.now() });
+            }
+            state.totalNotesCreated++;
+            checkUnlockProgression();
+            renderAll();
+          }
+        });
+      };
+      card.appendChild(creatorBar);
+    }
+
+    // ④ ボード本体領域 (付箋 / リスト / 無地)
+    const body = document.createElement('div');
+    body.className = 'palette-body';
+
+    if (pal.mode === 'sticky') {
+      const grid = document.createElement('div');
+      grid.className = 'notes-grid';
+      const sortedNotes = [...(pal.notes || [])].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+      sortedNotes.forEach(note => {
+        grid.appendChild(createStickyNoteElement(note, {
+          onEdit: () => {
+            openLayer5Input({
+              title: '付箋を編集',
+              initialText: note.text,
+              initialColor: note.color,
+              onSave: (newText, newColor) => {
+                if (!newText.trim()) return;
+                note.text = newText.trim();
+                note.color = newColor;
+                renderAll();
+              }
+            });
+          },
+          onPin: () => {
+            note.pinned = !note.pinned;
+            renderAll();
+          },
+          onColorCycle: () => {
+            const order = ['yellow', 'blue', 'pink', 'green'];
+            note.color = order[(order.indexOf(note.color) + 1) % order.length];
+            renderAll();
+          },
+          onMove: () => openMoveNoteDialog(note, 'palette', pal.id),
+          onRemove: () => handleRemoveNote(note, 'palette', pal.id)
+        }));
+      });
+      body.appendChild(grid);
+
+    } else if (pal.mode === 'todo') {
+      const listWrap = document.createElement('div');
+      listWrap.className = 'todo-list';
+      const todos = pal.todos || [];
+      if (todos.length === 0) {
+        listWrap.innerHTML = `<div style="text-align:center; padding:28px 10px; color:var(--text-sub); font-size:0.84rem;">まだリスト項目がありません。<br>上の作成欄やクイックボードからの移動で追加できます。</div>`;
+      }
+      todos.forEach(td => {
+        const row = document.createElement('div');
+        row.className = `todo-item ${td.done ? 'done' : ''}`;
+        row.innerHTML = `
+          <input type="checkbox" class="todo-checkbox" ${td.done ? 'checked' : ''}>
+          <div class="todo-text">${escapeHtml(td.text)}</div>
+          <button class="note-act-btn" title="削除">×</button>
+        `;
+        const cb = row.querySelector('.todo-checkbox');
+        cb.onchange = () => {
+          td.done = cb.checked;
+          if (td.done) {
+            if (pal.todoDoneRule === 'delete') {
+              pal.todos = pal.todos.filter(x => x.id !== td.id);
+              showToast('完了項目を即削除しました');
+            } else if (pal.todoDoneRule === 'trash') {
+              pal.todos = pal.todos.filter(x => x.id !== td.id);
+              state.trashItems.unshift({ id: td.id, text: td.text, color: 'blue', originTitle: pal.title, deletedAt: Date.now() });
+              showToast('完了項目をゴミ箱へ移動しました');
+            }
+          }
+          renderAll();
+        };
+        row.querySelector('.todo-text').onclick = () => {
+          openLayer5Input({
+            title: 'リスト項目を編集',
+            initialText: td.text,
+            hideColors: true,
+            onSave: (val) => {
+              if (val.trim()) td.text = val.trim();
+              renderAll();
+            }
+          });
+        };
+        row.querySelector('.note-act-btn').onclick = () => {
+          handleRemoveNote({ id: td.id, text: td.text, color: 'blue' }, 'todo', pal.id);
+        };
+        listWrap.appendChild(row);
+      });
+      body.appendChild(listWrap);
+
+    } else if (pal.mode === 'plain') {
+      const wrap = document.createElement('div');
+      wrap.className = 'plain-note-wrap';
+      const ta = document.createElement('textarea');
+      ta.className = 'plain-textarea';
+      ta.placeholder = 'ここに日記や長文ノートを自由に綴ってください（自動保存されます）...';
+      ta.value = pal.plainText || '';
+      ta.oninput = () => {
+        pal.plainText = ta.value;
+        saveState();
+      };
+      wrap.appendChild(ta);
+      body.appendChild(wrap);
+    }
+
+    card.appendChild(body);
+    container.appendChild(card);
+
+    // ヘッダー内ボタンのイベント紐付け
+    const prevBtn = card.querySelector('#pal-prev-btn');
+    if (prevBtn) prevBtn.onclick = () => {
+      state.activePaletteIndex = (state.activePaletteIndex - 1 + state.palettes.length) % state.palettes.length;
+      renderAll();
+    };
+    const nextBtn = card.querySelector('#pal-next-btn');
+    if (nextBtn) nextBtn.onclick = () => {
+      state.activePaletteIndex = (state.activePaletteIndex + 1) % state.palettes.length;
+      renderAll();
+    };
+    const addBtn = card.querySelector('#pal-add-btn');
+    if (addBtn) addBtn.onclick = () => openAddPaletteDialog();
+    const cfgBtn = card.querySelector('#pal-config-btn');
+    if (cfgBtn) cfgBtn.onclick = () => openPaletteSettingsDialog(pal);
+  }
+
+  // 付箋DOM生成ヘルパー
+  function createStickyNoteElement(note, handlers) {
+    const el = document.createElement('div');
+    el.className = `sticky-note ${note.color || 'yellow'} ${note.pinned ? 'pinned' : ''}`;
+    el.innerHTML = `
+      <div class="note-content">${escapeHtml(note.text)}</div>
+      <div class="note-footer">
+        <div class="note-actions">
+          <button class="note-act-btn act-pin" title="ピン留め">${note.pinned ? '📌' : '📍'}</button>
+          <button class="note-act-btn act-color" title="色変更">🎨</button>
+          <button class="note-act-btn act-move" title="別パレットへ移動">✈️</button>
+        </div>
+        <button class="note-act-btn act-del" title="剥がす">×</button>
+      </div>
+    `;
+    el.querySelector('.note-content').onclick = handlers.onEdit;
+    el.querySelector('.act-pin').onclick = handlers.onPin;
+    el.querySelector('.act-color').onclick = handlers.onColorCycle;
+    el.querySelector('.act-move').onclick = handlers.onMove;
+    el.querySelector('.act-del').onclick = handlers.onRemove;
+    return el;
+  }
+
+  // =========================================
+  // 他タブの描画 (i / B / P / iT)
+  // =========================================
+  function renderIbohView(container) {
+    const avatars = {
+      stickman: { icon: '🧍‍♂️', name: '棒人間 (初期i棒)', msg: '「飾り気のない1本の芯。まずは思いついた言葉をクイックボードやパレットに貼っていこう！」' },
+      buddy:    { icon: '🤖', name: '親しみ相棒モード', msg: '「今日もお疲れさま！立派な目標なんかなくていいから、今楽しいことやモヤッとしたことを置いていこうよ」' },
+      sage:     { icon: '🦉', name: '賢者スタイル', msg: '「言葉にすることで初めて、集団の空気から自分の尊厳を守ることができる。焦らず自分の輪郭を描こう」' }
+    };
+    const cur = avatars[state.ibohStyle] || avatars.stickman;
+
+    const card = document.createElement('div');
+    card.className = 'palette-card palette-color-slate';
+    card.innerHTML = `
+      <div class="palette-header">
+        <div class="palette-title-bar">
+          <span>💬 相棒 i棒 (言語化ルーム)</span>
+          <span style="font-size:0.72rem; color:var(--text-sub);">Phase B 接続準備室</span>
+        </div>
+      </div>
+      <div class="palette-body" style="display:flex; flex-direction:column; gap:12px;">
+        <div class="ios-list-group" style="text-align:center; padding:22px 14px;">
+          <div style="font-size:3.2rem; margin-bottom:8px;">${cur.icon}</div>
+          <div style="font-weight:800; font-size:1rem; margin-bottom:6px;">${cur.name}</div>
+          <div style="font-size:0.86rem; line-height:1.55; color:var(--text-main); background:rgba(128,128,128,0.1); padding:12px; border-radius:14px;">
+            ${cur.msg}
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-sub); margin-top:12px;">
+            ※現在「AIなしローカル実用版 (Phase A)」として稼働中です。<br>将来この画面にLLM APIが接続され、雑談からあなたの本音やガイドラインを一緒に抽出するチャット画面になります。
+          </div>
+        </div>
+
+        <div class="ios-list-group">
+          <div class="ios-list-title">i棒のスタイル切り替え</div>
+          <div style="display:flex; gap:8px;">
+            <button class="nav-arrow-btn" style="flex:1; height:38px; font-weight:700; ${state.ibohStyle==='stickman'?'outline:2px solid var(--accent-color);':''}" data-iboh="stickman">🧍‍♂️ 棒人間</button>
+            <button class="nav-arrow-btn" style="flex:1; height:38px; font-weight:700; ${state.ibohStyle==='buddy'?'outline:2px solid var(--accent-color);':''}" data-iboh="buddy">🤖 相棒</button>
+            <button class="nav-arrow-btn" style="flex:1; height:38px; font-weight:700; ${state.ibohStyle==='sage'?'outline:2px solid var(--accent-color);':''}" data-iboh="sage">🦉 賢者</button>
+          </div>
+        </div>
+      </div>
+    `;
+    card.querySelectorAll('[data-iboh]').forEach(btn => {
+      btn.onclick = () => {
+        state.ibohStyle = btn.getAttribute('data-iboh');
+        renderAll();
+      };
+    });
+    container.appendChild(card);
+  }
+
+  function renderBookView(container) {
+    const card = document.createElement('div');
+    card.className = 'palette-card palette-color-amber';
+    card.innerHTML = `
+      <div class="palette-header">
+        <div class="palette-title-bar">
+          <span>📚 言語化BOOK (マイ語彙辞書)</span>
+          <button class="fake-submit-btn" id="btn-add-book" style="border:none; cursor:pointer;">＋言葉を記す</button>
+        </div>
+      </div>
+      <div class="palette-body" id="book-list-body"></div>
+    `;
+    const body = card.querySelector('#book-list-body');
+    const items = state.bookItems || [];
+    if (items.length === 0) {
+      body.innerHTML = `<div class="ios-list-group" style="text-align:center; padding:30px 14px; color:var(--text-sub); font-size:0.85rem;">
+        まだ言葉が登録されていません（完全白紙スタート）。<br>本やアニメ・物語で出会った「忘れたくない言葉」と「出典」をコレクションしましょう。
+      </div>`;
+    } else {
+      items.forEach(item => {
+        const box = document.createElement('div');
+        box.className = 'ios-list-group';
+        box.innerHTML = `
+          <div style="font-weight:800; font-size:0.94rem; line-height:1.45; margin-bottom:4px;">「${escapeHtml(item.phrase)}」</div>
+          <div style="font-size:0.76rem; color:var(--text-sub); margin-bottom:6px;">出典：${escapeHtml(item.source || '不明')}</div>
+          ${item.memo ? `<div style="font-size:0.82rem; background:rgba(128,128,128,0.1); padding:8px; border-radius:8px; margin-bottom:8px;">💡 解釈：${escapeHtml(item.memo)}</div>` : ''}
+          <div style="display:flex; gap:6px; justify-content:flex-end;">
+            <button class="nav-arrow-btn" style="width:auto; padding:0 10px; font-size:0.72rem;" data-act="to-guideline">🧭 ガイドラインへ採用</button>
+            <button class="nav-arrow-btn" style="width:auto; padding:0 10px; font-size:0.72rem;" data-act="to-quick">⚡ 玄関に貼る</button>
+            <button class="nav-arrow-btn" style="width:auto; padding:0 8px; color:var(--danger-color);" data-act="del">削除</button>
+          </div>
+        `;
+        box.querySelector('[data-act="to-guideline"]').onclick = () => {
+          state.guidelines.levels.primary.items.unshift(`「${item.phrase}」（${item.source || ''}）${item.memo ? ' — ' + item.memo : ''}`);
+          showToast('🧭 マイガイドライン(プライマリ)に採用しました');
+          renderAll();
+        };
+        box.querySelector('[data-act="to-quick"]').onclick = () => {
+          state.quickNotes.unshift({
+            id: 'qn-' + Date.now(),
+            text: `「${item.phrase}」\n（出典：${item.source || '不明'}）`,
+            color: 'pink',
+            pinned: false,
+            createdAt: Date.now()
+          });
+          state.totalNotesCreated++;
+          checkUnlockProgression();
+          showToast('⚡ クイックボードに付箋として貼りました');
+          renderAll();
+        };
+        box.querySelector('[data-act="del"]').onclick = () => {
+          state.bookItems = state.bookItems.filter(x => x.id !== item.id);
+          renderAll();
+        };
+        body.appendChild(box);
+      });
+    }
+
+    card.querySelector('#btn-add-book').onclick = () => openAddBookDialog();
+    container.appendChild(card);
+  }
+
+  function renderProfileView(container) {
+    const p = state.profile || {};
+    const card = document.createElement('div');
+    card.className = 'palette-card palette-color-lavender';
+    card.innerHTML = `
+      <div class="palette-header">
+        <div class="palette-title-bar">
+          <span>👤 プロファイル (自分の取扱説明書)</span>
+          <span style="font-size:0.7rem; color:var(--text-sub);">AIパーソナライズDB</span>
+        </div>
+      </div>
+      <div class="palette-body">
+        <div class="ios-list-group">
+          <div class="ios-list-title">💎 大切にしている芯・譲れない価値観</div>
+          <textarea class="layer5-textarea" style="min-height:64px;" data-pfield="coreValues" placeholder="例：自分のペースを守ること...">${escapeHtml(p.coreValues || '')}</textarea>
+        </div>
+        <div class="ios-list-group">
+          <div class="ios-list-title">🌿 心地よいペース・休息のルール</div>
+          <textarea class="layer5-textarea" style="min-height:64px;" data-pfield="comfortPace" placeholder="例：1人のインプット時間を毎日確保する...">${escapeHtml(p.comfortPace || '')}</textarea>
+        </div>
+        <div class="ios-list-group">
+          <div class="ios-list-title">❤️ 好きなこと / 苦手なこと</div>
+          <textarea class="layer5-textarea" style="min-height:68px;" data-pfield="likesDislikes" placeholder="好きな作品、心地よい環境、避けたい空気など...">${escapeHtml(p.likesDislikes || '')}</textarea>
+        </div>
+        <div class="ios-list-group">
+          <div class="ios-list-title">📝 自由記述メモ (将来のi棒への引き継ぎメモ)</div>
+          <textarea class="layer5-textarea" style="min-height:80px;" data-pfield="freeMemo" placeholder="自分の取扱説明書として自由に記録...">${escapeHtml(p.freeMemo || '')}</textarea>
+        </div>
+      </div>
+    `;
+    card.querySelectorAll('[data-pfield]').forEach(ta => {
+      ta.oninput = () => {
+        const field = ta.getAttribute('data-pfield');
+        state.profile[field] = ta.value;
+        saveState();
+      };
+    });
+    container.appendChild(card);
+  }
+
+  function renderITubeView(container) {
+    const card = document.createElement('div');
+    card.className = 'palette-card palette-color-mint';
+    card.innerHTML = `
+      <div class="palette-header">
+        <div class="palette-title-bar">
+          <span>🎞️ iTube (時系列思考アルバム)</span>
+          <span style="font-size:0.72rem; color:var(--text-sub);">${(state.itubeItems || []).length}件の記録</span>
+        </div>
+      </div>
+      <div class="palette-body" id="itube-timeline-body"></div>
+    `;
+    const body = card.querySelector('#itube-timeline-body');
+    const items = state.itubeItems || [];
+    if (items.length === 0) {
+      body.innerHTML = `<div class="ios-list-group" style="text-align:center; padding:30px 14px; color:var(--text-sub); font-size:0.85rem;">
+        まだアーカイブされた付箋はありません。<br>付箋を剥がす（×）ときに「🎞️ iTubeへ保存」を選ぶと、ここに日付順のアルバムとして蓄積されます。
+      </div>`;
+    } else {
+      items.forEach(item => {
+        const d = new Date(item.archivedAt || Date.now());
+        const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const row = document.createElement('div');
+        row.className = 'ios-list-group';
+        row.innerHTML = `
+          <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-sub); margin-bottom:4px;">
+            <span>📅 ${dateStr}</span>
+            <span>元場所: ${escapeHtml(item.originTitle || 'ボード')}</span>
+          </div>
+          <div style="font-size:0.88rem; line-height:1.45; white-space:pre-wrap; margin-bottom:8px;">${escapeHtml(item.text)}</div>
+          <div style="display:flex; justify-content:flex-end; gap:6px;">
+            <button class="nav-arrow-btn" style="width:auto; padding:0 10px; font-size:0.72rem;" data-act="restore">↩️ 玄関に戻す</button>
+            <button class="nav-arrow-btn" style="width:auto; padding:0 8px; color:var(--danger-color);" data-act="del">削除</button>
+          </div>
+        `;
+        row.querySelector('[data-act="restore"]').onclick = () => {
+          state.quickNotes.unshift({ id: 'qn-' + Date.now(), text: item.text, color: item.color || 'yellow', pinned: false, createdAt: Date.now() });
+          state.itubeItems = state.itubeItems.filter(x => x.id !== item.id);
+          showToast('⚡ クイックボードへ戻しました');
+          renderAll();
+        };
+        row.querySelector('[data-act="del"]').onclick = () => {
+          state.itubeItems = state.itubeItems.filter(x => x.id !== item.id);
+          renderAll();
+        };
+        body.appendChild(row);
+      });
+    }
+    container.appendChild(card);
+  }
+
+  // =========================================
+  // レイヤー3: クイックボード描画 & 開閉制御
+  // =========================================
+  const quickBoardEl = document.getElementById('layer3-quickboard');
+  const quickHandleEl = document.getElementById('quickboard-handle');
+
+  quickHandleEl.onclick = () => {
+    quickBoardEl.classList.toggle('open');
+  };
+
+  // ツマミの左右ドラッグ対応
+  let qbTouchStartX = 0;
+  quickHandleEl.addEventListener('touchstart', e => {
+    qbTouchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  quickHandleEl.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].screenX - qbTouchStartX;
+    if (dx > 30) quickBoardEl.classList.add('open');
+    if (dx < -30) quickBoardEl.classList.remove('open');
+  }, { passive: true });
+
+  // クイックボード内の色選択ドット
+  document.querySelectorAll('[data-qcolor]').forEach(dot => {
+    dot.onclick = () => {
+      state.quickColor = dot.getAttribute('data-qcolor');
+      document.querySelectorAll('[data-qcolor]').forEach(d => d.classList.toggle('active', d === dot));
+      saveState();
+    };
+  });
+
+  // クイックボード作成欄タップでレイヤー5起動
+  document.getElementById('quick-creator-trigger').onclick = () => {
+    openLayer5Input({
+      title: '⚡ クイックボードに付箋を貼る',
+      initialText: '',
+      initialColor: state.quickColor || 'yellow',
+      onSave: (text, color) => {
+        if (!text.trim()) return;
+        state.quickNotes.unshift({
+          id: 'qn-' + Date.now(),
+          text: text.trim(),
+          color: color || 'yellow',
+          pinned: false,
+          createdAt: Date.now()
+        });
+        state.totalNotesCreated++;
+        checkUnlockProgression();
+        renderAll();
+      }
+    });
+  };
+
+  function renderQuickBoard() {
+    const grid = document.getElementById('quickboard-notes-grid');
+    grid.innerHTML = '';
+    const sorted = [...(state.quickNotes || [])].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    sorted.forEach(note => {
+      grid.appendChild(createStickyNoteElement(note, {
+        onEdit: () => {
+          openLayer5Input({
+            title: 'クイック付箋を編集',
+            initialText: note.text,
+            initialColor: note.color,
+            onSave: (newText, newColor) => {
+              if (!newText.trim()) return;
+              note.text = newText.trim();
+              note.color = newColor;
+              renderAll();
+            }
+          });
+        },
+        onPin: () => {
+          note.pinned = !note.pinned;
+          renderAll();
+        },
+        onColorCycle: () => {
+          const order = ['yellow', 'blue', 'pink', 'green'];
+          note.color = order[(order.indexOf(note.color) + 1) % order.length];
+          renderAll();
+        },
+        onMove: () => openMoveNoteDialog(note, 'quick', null),
+        onRemove: () => handleRemoveNote(note, 'quick', null)
+      }));
+    });
+  }
+
+  // =========================================
+  // レイヤー4: マイガイドライン描画 & 開閉制御
+  // =========================================
+  const guidelineEl = document.getElementById('layer4-guideline');
+  const guidelineBackdrop = document.getElementById('layer4-backdrop');
+  const guidelineHandle = document.getElementById('guideline-handle');
+
+  function openGuideline() {
+    guidelineEl.classList.add('open');
+    guidelineBackdrop.classList.add('open');
+  }
+  function closeGuideline() {
+    guidelineEl.classList.remove('open');
+    guidelineBackdrop.classList.remove('open');
+  }
+
+  guidelineHandle.onclick = () => {
+    if (guidelineEl.classList.contains('open')) closeGuideline();
+    else openGuideline();
+  };
+  guidelineBackdrop.onclick = closeGuideline;
+
+  // ハンドルの縦スワイプ対応
+  let glTouchStartY = 0;
+  guidelineHandle.addEventListener('touchstart', e => {
+    glTouchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+  guidelineHandle.addEventListener('touchend', e => {
+    const dy = e.changedTouches[0].screenY - glTouchStartY;
+    if (dy > 25) openGuideline();
+    if (dy < -25) closeGuideline();
+  }, { passive: true });
+
+  function renderGuidelineSheet() {
+    const stamps = getCalendarStamps();
+    document.getElementById('guideline-calendar-label').textContent = `現在の暦：${stamps.day}（${stamps.week}）`;
+
+    const container = document.getElementById('guideline-list-container');
+    container.innerHTML = '';
+
+    const levels = state.guidelines.levels;
+    Object.keys(levels).forEach(key => {
+      const lv = levels[key];
+      if (!lv.enabled) return;
+
+      const card = document.createElement('div');
+      card.className = 'guideline-level-card';
+      card.innerHTML = `
+        <div class="guideline-level-header">
+          <span>${escapeHtml(lv.label)}</span>
+          <button class="nav-arrow-btn" style="width:auto; padding:0 8px; font-size:0.7rem;" data-add-lv="${key}">＋追加</button>
+        </div>
+        <div class="lv-items-wrap"></div>
+      `;
+      const wrap = card.querySelector('.lv-items-wrap');
+      (lv.items || []).forEach((txt, idx) => {
+        const row = document.createElement('div');
+        row.className = 'guideline-item-row';
+        row.innerHTML = `
+          <span style="flex:1; cursor:pointer;">${escapeHtml(txt)}</span>
+          <button class="note-act-btn" style="width:20px; height:20px;">×</button>
+        `;
+        row.querySelector('span').onclick = () => {
+          openLayer5Input({
+            title: `${lv.label} を編集`,
+            initialText: txt,
+            hideColors: true,
+            onSave: (val) => {
+              if (val.trim()) lv.items[idx] = val.trim();
+              renderAll();
+            }
+          });
+        };
+        row.querySelector('button').onclick = () => {
+          lv.items.splice(idx, 1);
+          renderAll();
+        };
+        wrap.appendChild(row);
+      });
+
+      card.querySelector(`[data-add-lv="${key}"]`).onclick = () => {
+        openLayer5Input({
+          title: `${lv.label} に新規追加`,
+          initialText: '',
+          hideColors: true,
+          onSave: (val) => {
+            if (val.trim()) lv.items.push(val.trim());
+            renderAll();
+          }
+        });
+      };
+
+      container.appendChild(card);
+    });
+  }
+
+  // マイガイドラインのレベル別ON/OFF設定ダイアログ
+  document.getElementById('btn-guideline-config').onclick = () => {
+    const levels = state.guidelines.levels;
+    let html = `<div style="display:flex; flex-direction:column; gap:8px;">`;
+    Object.keys(levels).forEach(k => {
+      html += `
+        <label style="display:flex; align-items:center; justify-content:space-between; font-size:0.86rem; padding:6px 0;">
+          <span>${escapeHtml(levels[k].label)}</span>
+          <input type="checkbox" data-gl-toggle="${k}" ${levels[k].enabled ? 'checked' : ''} style="width:18px; height:18px;">
+        </label>
+      `;
+    });
+    html += `</div>`;
+
+    openLayer6Dialog({
+      title: '表示する期間レベルのON/OFF',
+      desc: '自分が使いたい階層だけを表示できます',
+      customHtml: html,
+      buttons: [
+        {
+          label: '完了',
+          onClick: (bodyEl) => {
+            bodyEl.querySelectorAll('[data-gl-toggle]').forEach(cb => {
+              const k = cb.getAttribute('data-gl-toggle');
+              levels[k].enabled = cb.checked;
+            });
+            renderAll();
+          }
+        }
+      ]
+    });
+  };
+
+  // カレンダー期間切り替わり時の問いかけ (案C)
+  document.getElementById('btn-guideline-period-check').onclick = () => {
+    openLayer6Dialog({
+      title: '📅 新しい期間になりました',
+      desc: '前の期間のスタンス（月間・週間・日次ロールなど）をそのまま引き継ぎますか？ それとも新しく決めますか？',
+      buttons: [
+        {
+          label: '前のスタンスを引き継ぐ',
+          onClick: () => {
+            state.calendarStamps = getCalendarStamps();
+            showToast('現在のスタンスを新しい期間へ引き継ぎました');
+            renderAll();
+          }
+        },
+        {
+          label: '新しく決める (日次をクリアして入力)',
+          onClick: () => {
+            state.guidelines.levels.daily.items = [];
+            renderAll();
+            openLayer5Input({
+              title: '☀️ 新しい日次ロール・スタンスを決める',
+              initialText: 'ロール：',
+              hideColors: true,
+              onSave: (val) => {
+                if (val.trim()) state.guidelines.levels.daily.items.push(val.trim());
+                renderAll();
+              }
+            });
+          }
+        },
+        { label: 'キャンセル', role: 'cancel' }
+      ]
+    });
+  };
+
+  // =========================================
+  // レイヤー5: 入力時レイヤー (Floating Input)
+  // =========================================
+  const layer5Overlay = document.getElementById('layer5-input-overlay');
+  const layer5Title = document.getElementById('layer5-title');
+  const layer5Textarea = document.getElementById('layer5-textarea');
+  const layer5ColorPicker = document.getElementById('layer5-color-picker');
+  let layer5CurrentColor = 'yellow';
+  let layer5Callback = null;
+
+  function openLayer5Input({ title, initialText = '', initialColor = 'yellow', hideColors = false, onSave }) {
+    layer5Title.textContent = title || '入力';
+    layer5Textarea.value = initialText;
+    layer5CurrentColor = initialColor;
+    layer5Callback = onSave;
+
+    if (hideColors) {
+      layer5ColorPicker.classList.add('hidden');
+    } else {
+      layer5ColorPicker.classList.remove('hidden');
+      layer5ColorPicker.querySelectorAll('[data-l5color]').forEach(d => {
+        d.classList.toggle('active', d.getAttribute('data-l5color') === layer5CurrentColor);
+      });
+    }
+
+    layer5Overlay.classList.add('open');
+    setTimeout(() => layer5Textarea.focus(), 60);
+  }
+
+  function closeLayer5Input() {
+    layer5Overlay.classList.remove('open');
+    layer5Textarea.blur();
+    layer5Callback = null;
+  }
+
+  layer5ColorPicker.querySelectorAll('[data-l5color]').forEach(dot => {
+    dot.onclick = () => {
+      layer5CurrentColor = dot.getAttribute('data-l5color');
+      layer5ColorPicker.querySelectorAll('[data-l5color]').forEach(d => d.classList.toggle('active', d === dot));
+    };
+  });
+
+  document.getElementById('btn-layer5-cancel').onclick = closeLayer5Input;
+  layer5Overlay.onclick = closeLayer5Input;
+
+  document.getElementById('btn-layer5-submit').onclick = () => {
+    if (layer5Callback) {
+      layer5Callback(layer5Textarea.value, layer5CurrentColor);
+    }
+    closeLayer5Input();
+  };
+
+  // =========================================
+  // レイヤー6: ダイアログ用レイヤー (System & Action Dialogs)
+  // =========================================
+  const layer6Overlay = document.getElementById('layer6-dialog-overlay');
+  const dialogTitleEl = document.getElementById('dialog-title');
+  const dialogDescEl = document.getElementById('dialog-desc');
+  const dialogCustomBody = document.getElementById('dialog-custom-body');
+  const dialogBtnList = document.getElementById('dialog-btn-list');
+
+  function openLayer6Dialog({ title, desc = '', customHtml = '', buttons = [] }) {
+    dialogTitleEl.textContent = title;
+    dialogDescEl.textContent = desc;
+    if (customHtml) {
+      dialogCustomBody.innerHTML = customHtml;
+      dialogCustomBody.classList.remove('hidden');
+    } else {
+      dialogCustomBody.innerHTML = '';
+      dialogCustomBody.classList.add('hidden');
+    }
+
+    dialogBtnList.innerHTML = '';
+    buttons.forEach(btnCfg => {
+      const b = document.createElement('button');
+      b.className = `dialog-action-btn ${btnCfg.role || ''}`;
+      b.textContent = btnCfg.label;
+      b.onclick = () => {
+        const keepOpen = btnCfg.onClick ? btnCfg.onClick(dialogCustomBody) : false;
+        if (!keepOpen) closeLayer6Dialog();
+      };
+      dialogBtnList.appendChild(b);
+    });
+
+    layer6Overlay.classList.add('open');
+  }
+
+  function closeLayer6Dialog() {
+    layer6Overlay.classList.remove('open');
+  }
+  layer6Overlay.onclick = closeLayer6Dialog;
+
+  // =========================================
+  // 各アクション・ダイアログ実装
+  // =========================================
+
+  // 1. 右上クリアボタン (L2-02) ➔ 3択ダイアログ
+  document.getElementById('btn-clear-menu').onclick = () => {
+    openLayer6Dialog({
+      title: 'リセットしますか？',
+      desc: '試用版コントロール：全機能の即時解放、または全データの初期化を行えます。',
+      buttons: [
+        {
+          label: '🌟 全機能解放 (Phase 2へスキップ)',
+          onClick: () => {
+            state.phase = 2;
+            state.totalNotesCreated = Math.max(state.totalNotesCreated, 4);
+            showToast('🌟 すべての機能を解放しました！');
+            renderAll();
+          }
+        },
+        {
+          label: 'リセットする (全データ初期化)',
+          role: 'danger',
+          onClick: () => {
+            localStorage.removeItem(STORAGE_KEY);
+            state = createDefaultData();
+            showToast('初期状態にリセットしました');
+            renderAll();
+          }
+        },
+        { label: 'リセットしない', role: 'cancel' }
+      ]
+    });
+  };
+
+  // 2. 付箋を剥がす時の振り分け (ゴミ箱 vs iTube)
+  function handleRemoveNote(note, sourceType, paletteId) {
+    const removeFromSource = () => {
+      if (sourceType === 'quick') {
+        state.quickNotes = state.quickNotes.filter(n => n.id !== note.id);
+      } else if (sourceType === 'palette') {
+        const pal = state.palettes.find(p => p.id === paletteId);
+        if (pal) pal.notes = (pal.notes || []).filter(n => n.id !== note.id);
+      } else if (sourceType === 'todo') {
+        const pal = state.palettes.find(p => p.id === paletteId);
+        if (pal) pal.todos = (pal.todos || []).filter(t => t.id !== note.id);
+      }
+    };
+
+    const originName = sourceType === 'quick'
+      ? 'クイックボード'
+      : (state.palettes.find(p => p.id === paletteId)?.title || 'パレット');
+
+    if (!state.confirmBeforeRemove) {
+      removeFromSource();
+      state.trashItems.unshift({ id: note.id, text: note.text, color: note.color, originTitle: originName, deletedAt: Date.now() });
+      showToast('🗑️ ゴミ箱へ移動しました');
+      renderAll();
+      return;
+    }
+
+    openLayer6Dialog({
+      title: '付箋を剥がしますか？',
+      desc: '不要なメモは「ゴミ箱」へ、大切な気づきや思い出は「iTube（時系列アルバム）」へ保存できます。',
+      buttons: [
+        {
+          label: '🎞️ iTube (アーカイブ) へ保存',
+          onClick: () => {
+            removeFromSource();
+            state.itubeItems.unshift({
+              id: 'it-' + Date.now(),
+              text: note.text,
+              color: note.color || 'yellow',
+              originTitle: originName,
+              archivedAt: Date.now()
+            });
+            showToast('🎞️ iTubeへ保存しました');
+            renderAll();
+          }
+        },
+        {
+          label: '🗑️ ゴミ箱へ移動 (半年後自動消去)',
+          role: 'danger',
+          onClick: () => {
+            removeFromSource();
+            state.trashItems.unshift({
+              id: note.id,
+              text: note.text,
+              color: note.color || 'yellow',
+              originTitle: originName,
+              deletedAt: Date.now()
+            });
+            showToast('🗑️ ゴミ箱へ移動しました');
+            renderAll();
+          }
+        },
+        { label: 'キャンセル', role: 'cancel' }
+      ]
+    });
+  }
+
+  // 3. 付箋のパレット間ワンタップ移動 & 自動フォーマット変換
+  function openMoveNoteDialog(note, sourceType, currentPaletteId) {
+    const buttons = [];
+
+    // クイックボード以外にある場合はクイックボードへ戻す選択肢を追加
+    if (sourceType !== 'quick') {
+      buttons.push({
+        label: '⚡ クイックボード (玄関) へ移動',
+        onClick: () => {
+          const fromPal = state.palettes.find(p => p.id === currentPaletteId);
+          if (fromPal) fromPal.notes = fromPal.notes.filter(n => n.id !== note.id);
+          state.quickNotes.unshift({ ...note, pinned: false });
+          showToast('⚡ クイックボードへ移動しました');
+          renderAll();
+        }
+      });
+    }
+
+    // 各カラーパレットへの移動ボタン
+    state.palettes.forEach(targetPal => {
+      if (sourceType === 'palette' && targetPal.id === currentPaletteId) return;
+      const modeName = targetPal.mode === 'todo' ? 'リスト項目に変換' : (targetPal.mode === 'plain' ? 'ノート末尾に追記' : '付箋として移動');
+      buttons.push({
+        label: `🎨 「${targetPal.title}」へ (${modeName})`,
+        onClick: () => {
+          // 元の場所から削除
+          if (sourceType === 'quick') {
+            state.quickNotes = state.quickNotes.filter(n => n.id !== note.id);
+          } else {
+            const fromPal = state.palettes.find(p => p.id === currentPaletteId);
+            if (fromPal) fromPal.notes = fromPal.notes.filter(n => n.id !== note.id);
+          }
+
+          // 移動先のフォーマットに合わせて自動変換
+          if (targetPal.mode === 'todo') {
+            targetPal.todos = targetPal.todos || [];
+            targetPal.todos.unshift({ id: 'td-' + Date.now(), text: note.text, done: false });
+            showToast(`☑️ 「${targetPal.title}」のToDoに追加しました`);
+          } else if (targetPal.mode === 'plain') {
+            const prefix = targetPal.plainText ? '\n\n' : '';
+            targetPal.plainText = (targetPal.plainText || '') + prefix + `・${note.text}`;
+            showToast(`📄 「${targetPal.title}」の本文末尾に追記しました`);
+          } else {
+            targetPal.notes = targetPal.notes || [];
+            targetPal.notes.unshift({ ...note, pinned: false });
+            showToast(`📌 「${targetPal.title}」へ移動しました`);
+          }
+          renderAll();
+        }
+      });
+    });
+
+    buttons.push({ label: 'キャンセル', role: 'cancel' });
+
+    openLayer6Dialog({
+      title: '✈️ 付箋の移動先を選択',
+      desc: '移動先のパレット形態（付箋・リスト・無地）に合わせて自動で変換されます。',
+      buttons
+    });
+  }
+
+  // 4. 新規カラーパレット追加ダイアログ
+  function openAddPaletteDialog() {
+    const html = `
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div>
+          <div class="ios-list-title">パレット名 (例：アニメ趣味、仕事、構想)</div>
+          <input id="new-pal-title" type="text" class="layer5-textarea" style="min-height:38px; padding:6px 10px;" placeholder="新しいパレット名">
+        </div>
+        <div>
+          <div class="ios-list-title">パレットカラー</div>
+          <select id="new-pal-color" class="layer5-textarea" style="min-height:38px; padding:6px 10px;">
+            <option value="sky">スカイブルー</option>
+            <option value="mint">ミントグリーン</option>
+            <option value="peach">ピーチピンク</option>
+            <option value="lavender">ラベンダー</option>
+            <option value="amber">アンバーイエロー</option>
+            <option value="slate">スレートグレー</option>
+          </select>
+        </div>
+        <div>
+          <div class="ios-list-title">ボード形態 (1パレット＝1形態)</div>
+          <select id="new-pal-mode" class="layer5-textarea" style="min-height:38px; padding:6px 10px;">
+            <option value="sticky">📌 付箋モード (2列タイル)</option>
+            <option value="todo">☑️ リストモード (ToDoチェックリスト)</option>
+            <option value="plain">📄 無地モード (日記・フリーノート)</option>
+          </select>
+        </div>
+      </div>
+    `;
+    openLayer6Dialog({
+      title: '🎨 新しいカラーパレットを追加',
+      customHtml: html,
+      buttons: [
+        {
+          label: '作成する',
+          onClick: (bodyEl) => {
+            const title = bodyEl.querySelector('#new-pal-title').value.trim() || `パレット ${state.palettes.length + 1}`;
+            const color = bodyEl.querySelector('#new-pal-color').value;
+            const mode = bodyEl.querySelector('#new-pal-mode').value;
+            state.palettes.push({
+              id: 'pal-' + Date.now(),
+              title,
+              color,
+              mode,
+              todoDoneRule: 'keep',
+              policy: 'このパレットの目的・スタンスを自由に設定しよう',
+              notes: [],
+              todos: [],
+              plainText: ''
+            });
+            state.activePaletteIndex = state.palettes.length - 1;
+            showToast(`🎨 「${title}」を作成しました`);
+            renderAll();
+          }
+        },
+        { label: 'キャンセル', role: 'cancel' }
+      ]
+    });
+  }
+
+  // 5. パレット個別設定ダイアログ (パレット右上の黒丸ボタン)
+  function openPaletteSettingsDialog(pal) {
+    const html = `
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div>
+          <div class="ios-list-title">パレットタイトル</div>
+          <input id="edit-pal-title" type="text" class="layer5-textarea" style="min-height:38px; padding:6px 10px;" value="${escapeHtml(pal.title)}">
+        </div>
+        <div>
+          <div class="ios-list-title">パレットカラー</div>
+          <select id="edit-pal-color" class="layer5-textarea" style="min-height:38px; padding:6px 10px;">
+            <option value="sky" ${pal.color==='sky'?'selected':''}>スカイブルー</option>
+            <option value="mint" ${pal.color==='mint'?'selected':''}>ミントグリーン</option>
+            <option value="peach" ${pal.color==='peach'?'selected':''}>ピーチピンク</option>
+            <option value="lavender" ${pal.color==='lavender'?'selected':''}>ラベンダー</option>
+            <option value="amber" ${pal.color==='amber'?'selected':''}>アンバーイエロー</option>
+            <option value="slate" ${pal.color==='slate'?'selected':''}>スレートグレー</option>
+          </select>
+        </div>
+        <div>
+          <div class="ios-list-title">フォーマット (形態) 切り替え</div>
+          <select id="edit-pal-mode" class="layer5-textarea" style="min-height:38px; padding:6px 10px;">
+            <option value="sticky" ${pal.mode==='sticky'?'selected':''}>📌 付箋モード</option>
+            <option value="todo" ${pal.mode==='todo'?'selected':''}>☑️ リストモード (ToDo)</option>
+            <option value="plain" ${pal.mode==='plain'?'selected':''}>📄 無地モード (フリーノート)</option>
+          </select>
+        </div>
+        <div>
+          <div class="ios-list-title">リスト完了(済)時の扱い</div>
+          <select id="edit-pal-todorule" class="layer5-textarea" style="min-height:38px; padding:6px 10px;">
+            <option value="keep" ${pal.todoDoneRule==='keep'?'selected':''}>そのまま完了状態で残す</option>
+            <option value="trash" ${pal.todoDoneRule==='trash'?'selected':''}>自動でゴミ箱へ移動</option>
+            <option value="delete" ${pal.todoDoneRule==='delete'?'selected':''}>自動で即削除</option>
+          </select>
+        </div>
+      </div>
+    `;
+    const buttons = [
+      {
+        label: '設定を保存',
+        onClick: (bodyEl) => {
+          pal.title = bodyEl.querySelector('#edit-pal-title').value.trim() || pal.title;
+          pal.color = bodyEl.querySelector('#edit-pal-color').value;
+          pal.mode = bodyEl.querySelector('#edit-pal-mode').value;
+          pal.todoDoneRule = bodyEl.querySelector('#edit-pal-todorule').value;
+          renderAll();
+        }
+      }
+    ];
+    if (state.palettes.length > 1) {
+      buttons.push({
+        label: 'このパレットを削除',
+        role: 'danger',
+        onClick: () => {
+          state.palettes = state.palettes.filter(p => p.id !== pal.id);
+          state.activePaletteIndex = 0;
+          showToast('パレットを削除しました');
+          renderAll();
+        }
+      });
+    }
+    buttons.push({ label: 'キャンセル', role: 'cancel' });
+
+    openLayer6Dialog({
+      title: `⚙️ 「${pal.title}」の設定`,
+      customHtml: html,
+      buttons
+    });
+  }
+
+  // 6. 言語化BOOK 追加ダイアログ
+  function openAddBookDialog() {
+    const html = `
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <input id="book-phrase" type="text" class="layer5-textarea" style="min-height:38px; padding:6px 10px;" placeholder="記したい言葉・フレーズ">
+        <input id="book-source" type="text" class="layer5-textarea" style="min-height:38px; padding:6px 10px;" placeholder="出典 (作品名・人物名など)">
+        <textarea id="book-memo" class="layer5-textarea" style="min-height:60px;" placeholder="自分なりの解釈・メモ (任意)"></textarea>
+      </div>
+    `;
+    openLayer6Dialog({
+      title: '📚 言語化BOOKに言葉を記す',
+      customHtml: html,
+      buttons: [
+        {
+          label: '保存する',
+          onClick: (bodyEl) => {
+            const phrase = bodyEl.querySelector('#book-phrase').value.trim();
+            const source = bodyEl.querySelector('#book-source').value.trim();
+            const memo = bodyEl.querySelector('#book-memo').value.trim();
+            if (!phrase) return;
+            state.bookItems.unshift({ id: 'bk-' + Date.now(), phrase, source, memo });
+            renderAll();
+          }
+        },
+        { label: 'キャンセル', role: 'cancel' }
+      ]
+    });
+  }
+
+  // 7. 左下ゴミ箱ボタン (L2-05)
+  document.getElementById('btn-open-trash').onclick = () => {
+    const items = state.trashItems || [];
+    let html = '';
+    if (items.length === 0) {
+      html = `<div style="text-align:center; padding:18px 0; color:var(--text-sub); font-size:0.84rem;">ゴミ箱は空です。<br>（ここに入った付箋は半年後に自動消去されます）</div>`;
+    } else {
+      html = `<div style="display:flex; flex-direction:column; gap:8px;">`;
+      items.forEach(item => {
+        html += `
+          <div class="ios-list-group" style="margin-bottom:0; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <div style="flex:1; font-size:0.82rem; overflow:hidden; text-overflow:ellipsis;">
+              <div style="font-weight:700;">${escapeHtml(item.text)}</div>
+              <div style="font-size:0.68rem; color:var(--text-sub);">元: ${escapeHtml(item.originTitle || 'ボード')}</div>
+            </div>
+            <button class="nav-arrow-btn" style="width:auto; padding:0 8px; font-size:0.72rem;" data-restore-id="${item.id}">復元</button>
+          </div>
+        `;
+      });
+      html += `</div>`;
+    }
+
+    const buttons = [];
+    if (items.length > 0) {
+      buttons.push({
+        label: 'ゴミ箱を空にする (完全削除)',
+        role: 'danger',
+        onClick: () => {
+          state.trashItems = [];
+          showToast('ゴミ箱を空にしました');
+          renderAll();
+        }
+      });
+    }
+    buttons.push({ label: '閉じる', role: 'cancel' });
+
+    openLayer6Dialog({
+      title: `🗑️ ゴミ箱 (${items.length}件)`,
+      desc: '半年経過したアイテムは自動的に完全消去されます。',
+      customHtml: html,
+      buttons
+    });
+
+    // 復元ボタンのイベント
+    dialogCustomBody.querySelectorAll('[data-restore-id]').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute('data-restore-id');
+        const target = state.trashItems.find(x => x.id === id);
+        if (target) {
+          state.quickNotes.unshift({ id: 'qn-' + Date.now(), text: target.text, color: target.color || 'yellow', pinned: false, createdAt: Date.now() });
+          state.trashItems = state.trashItems.filter(x => x.id !== id);
+          showToast('⚡ クイックボードへ復元しました');
+          closeLayer6Dialog();
+          renderAll();
+        }
+      };
+    });
+  };
+
+  // 8. 右下全体設定ボタン (L2-06: レイヤー1テーマ変更・パレット並び替え・バックアップ)
+  document.getElementById('btn-open-settings').onclick = () => {
+    const themes = [
+      { id: 'dark',     label: 'ダーク',   bg: '#0a0b0e', fg: '#fff' },
+      { id: 'light',    label: 'ライト',   bg: '#ffffff', fg: '#111' },
+      { id: 'skyblue',  label: 'スカイ',   bg: '#cbeeff', fg: '#111' },
+      { id: 'paleblue', label: 'ペール青', bg: '#d4e3ff', fg: '#111' },
+      { id: 'mint',     label: 'ミント',   bg: '#dbf0dc', fg: '#111' },
+      { id: 'cream',    label: 'クリーム', bg: '#faf6d4', fg: '#111' },
+      { id: 'pink',     label: 'ピンク',   bg: '#ffdfdb', fg: '#111' },
+      { id: 'lavender', label: 'ラベンダー',bg: '#efd6ff', fg: '#111' }
+    ];
+
+    let swatchesHtml = `<div class="theme-swatch-grid">`;
+    themes.forEach(t => {
+      swatchesHtml += `
+        <button class="theme-swatch-btn ${state.theme===t.id?'selected':''}" data-set-theme="${t.id}" style="background:${t.bg}; color:${t.fg};">
+          ${t.label}
+        </button>
+      `;
+    });
+    swatchesHtml += `</div>`;
+
+    let palOrderHtml = '';
+    state.palettes.forEach((p, idx) => {
+      palOrderHtml += `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:4px 0; font-size:0.82rem;">
+          <span>${idx + 1}. ${escapeHtml(p.title)}</span>
+          <div style="display:flex; gap:4px;">
+            ${idx > 0 ? `<button class="nav-arrow-btn" data-move-up="${idx}">↑</button>` : ''}
+            ${idx < state.palettes.length - 1 ? `<button class="nav-arrow-btn" data-move-down="${idx}">↓</button>` : ''}
+          </div>
+        </div>
+      `;
+    });
+
+    const html = `
+      <div class="ios-list-group">
+        <div class="ios-list-title">🎨 レイヤー1：背景カラーテーマ (全8色)</div>
+        ${swatchesHtml}
+      </div>
+
+      <div class="ios-list-group">
+        <div class="ios-list-title">🗂️ カラーパレットの並び替え管理</div>
+        ${palOrderHtml}
+      </div>
+
+      <div class="ios-list-group">
+        <label style="display:flex; align-items:center; justify-content:space-between; font-size:0.82rem;">
+          <span>付箋を剥がす時に確認ダイアログを出す</span>
+          <input type="checkbox" id="chk-confirm-remove" ${state.confirmBeforeRemove ? 'checked' : ''} style="width:18px; height:18px;">
+        </label>
+      </div>
+
+      <div class="ios-list-group">
+        <div class="ios-list-title">💾 データ手動バックアップ (Safari消失対策)</div>
+        <div style="display:flex; gap:6px; margin-bottom:6px;">
+          <button class="fake-submit-btn" id="btn-export-json" style="flex:1; border:none; cursor:pointer; text-align:center;">📋 全データをコピー</button>
+          <button class="nav-arrow-btn" id="btn-import-json" style="flex:1; height:auto; font-weight:700;">📥 貼り付けて復元</button>
+        </div>
+        <textarea id="backup-json-area" class="layer5-textarea" style="min-height:56px; font-size:0.72rem;" placeholder="書き出したJSONテキストがここに表示されます。復元時はここに貼り付けて「貼り付けて復元」を押してください。"></textarea>
+      </div>
+    `;
+
+    openLayer6Dialog({
+      title: '⚙️ アプリ全体設定',
+      customHtml: html,
+      buttons: [{ label: '閉じる', role: 'cancel' }]
+    });
+
+    // テーマ選択イベント
+    dialogCustomBody.querySelectorAll('[data-set-theme]').forEach(btn => {
+      btn.onclick = () => {
+        state.theme = btn.getAttribute('data-set-theme');
+        dialogCustomBody.querySelectorAll('[data-set-theme]').forEach(b => b.classList.toggle('selected', b === btn));
+        renderAll();
+      };
+    });
+
+    // パレット並び替えイベント
+    dialogCustomBody.querySelectorAll('[data-move-up]').forEach(btn => {
+      btn.onclick = () => {
+        const i = parseInt(btn.getAttribute('data-move-up'), 10);
+        const tmp = state.palettes[i - 1];
+        state.palettes[i - 1] = state.palettes[i];
+        state.palettes[i] = tmp;
+        state.activePaletteIndex = i - 1;
+        closeLayer6Dialog();
+        renderAll();
+        document.getElementById('btn-open-settings').click();
+      };
+    });
+    dialogCustomBody.querySelectorAll('[data-move-down]').forEach(btn => {
+      btn.onclick = () => {
+        const i = parseInt(btn.getAttribute('data-move-down'), 10);
+        const tmp = state.palettes[i + 1];
+        state.palettes[i + 1] = state.palettes[i];
+        state.palettes[i] = tmp;
+        state.activePaletteIndex = i + 1;
+        closeLayer6Dialog();
+        renderAll();
+        document.getElementById('btn-open-settings').click();
+      };
+    });
+
+    // 剥がす確認トグル
+    dialogCustomBody.querySelector('#chk-confirm-remove').onchange = (e) => {
+      state.confirmBeforeRemove = e.target.checked;
+      saveState();
+    };
+
+    // JSON書き出し & 復元
+    const jsonArea = dialogCustomBody.querySelector('#backup-json-area');
+    dialogCustomBody.querySelector('#btn-export-json').onclick = () => {
+      const str = JSON.stringify(state);
+      jsonArea.value = str;
+      jsonArea.select();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(str).catch(() => {});
+      }
+      showToast('📋 バックアップデータをコピーしました！メモ帳等に保存してください');
+    };
+    dialogCustomBody.querySelector('#btn-import-json').onclick = () => {
+      const raw = jsonArea.value.trim();
+      if (!raw) {
+        showToast('復元用のテキストを下の枠に貼り付けてください');
+        return;
+      }
+      try {
+        const imported = JSON.parse(raw);
+        state = Object.assign(createDefaultData(), imported);
+        saveState();
+        closeLayer6Dialog();
+        renderAll();
+        showToast('✅ データを復元しました！');
+      } catch (err) {
+        showToast('❌ データ形式が正しくありません');
+      }
+    };
+  };
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // 初回描画
+  renderAll();
+})();
+</script>
+</body>
+</html>
